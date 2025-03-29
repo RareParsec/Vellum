@@ -8,22 +8,22 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-font-sans: var(--font-geist-sans);
+  --color-font-mono: var(--font-geist-mono);
 
-  --isabelline: #f8f5f2;
-  --linen: #f4ede3;
-  --antiqueWhite: #f0e4d1;
-  --dun: #cabaa7;
-  --beaver: #a4907c;
-  --rosyBrown: #c39994;
-  --rosyBrownDark: #bd8f89;
+  --color-isabelline: #f8f5f2;
+  --color-linen: #f4ede3;
+  --color-antiqueWhite: #f0e4d1;
+  --color-dun: #cabaa7;
+  --color-beaver: #a4907c;
+  --color-rosyBrown: #c39994;
+  --color-rosyBrownDark: #bd8f89;
 
-  --softSageGreen: #a3b18a;
-  --mutedClayRed: #d46a6a;
-  --gentleBlueGray: #c3c7c5;
+  --color-softSageGreen: #a3b18a;
+  --color-mutedClayRed: #d46a6a;
+  --color-gentleBlueGray: #c3c7c5;
 
-  --deepMocha: #5e5246;
+  --color-deepMocha: #5e5246;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -34,13 +34,13 @@
 }
 
 body {
-  background: var(--isabelline);
-  color: var(--deepMocha);
+  background: var(--color-isabelline);
+  color: var(--color-deepMocha);
   /* font-family: Arial, Helvetica, sans-serif; */
 }
 
-@utility rounded-block {
-  background-color: var(--linen);
+@utility rd-block {
+  background-color: var(--color-linen);
   border-radius: 12px;
   padding: 8px 15px 8px 15px;
 }
