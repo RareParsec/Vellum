@@ -12,6 +12,7 @@
   --color-font-mono: var(--font-geist-mono);
 
   --color-isabelline: #f8f5f2;
+  --color-whisperBlush: #f2dfdb;
   --color-linen: #f4ede3;
   --color-antiqueWhite: #f0e4d1;
   --color-dun: #cabaa7;
@@ -43,4 +44,14 @@ body {
   background-color: var(--color-linen);
   border-radius: 12px;
   padding: 8px 15px 8px 15px;
+}
+
+@layer utilities {
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
 }

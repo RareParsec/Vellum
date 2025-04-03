@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono, Nunito } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "react-hot-toast";
+import Navbar from "./components/navbar";
 
 const nunito = Nunito({
   subsets: ["latin"],
@@ -20,8 +21,10 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${nunito.className} antialiased`}>
-        {children}
-        <Toaster position="bottom-center" />
+        <Navbar>
+          {children}
+          <Toaster position="bottom-center" />
+        </Navbar>
       </body>
     </html>
   );

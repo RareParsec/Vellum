@@ -3,7 +3,9 @@ import { signOut } from "firebase/auth";
 import { useRouter } from "next/navigation";
 import React, { useState } from "react";
 
-function SelectUsername() {
+function SelectUsername({ isOpen }: { isOpen: boolean }) {
+  if (!isOpen) return null;
+
   const [username, setUsername] = useState("");
 
   const router = useRouter();
@@ -13,7 +15,7 @@ function SelectUsername() {
   return (
     <div className="absolute top-0 left-0 h-full w-full backdrop-blur-[5px]">
       <div className="flex flex-row justify-center items-center mt-52">
-        <div className="rd-block text-center flex flex-col justify-between p-4 py-8 w-[50%]">
+        <div className="rd-block text-center flex flex-col justify-between p-4 py-8 w-[50%] max-w-[500px]">
           <div>
             <div className="text-lg font-bold">Select a username!</div>
             <div className="text-sm">You won't be able to change it later</div>

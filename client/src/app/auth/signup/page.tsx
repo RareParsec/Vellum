@@ -1,33 +1,45 @@
 "use client";
 
 import SelectUsername from "@/app/components/modals/usernameSelection";
+import customAxios from "@/app/config/axios";
 import { auth, provider } from "@/app/config/firebase";
 import { GoogleLogo } from "@phosphor-icons/react";
-import { signInWithPopup } from "firebase/auth";
+import { AxiosError } from "axios";
+import { signInWithPopup, signOut } from "firebase/auth";
 import { useRouter } from "next/navigation";
-import React from "react";
+import React, { useState } from "react";
 import toast from "react-hot-toast";
 
 function SignUp() {
   const router = useRouter();
 
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
   const handleGoogleAuth = async () => {
+    const toastId = toast.loading("Loading...");
+
     try {
-      await toast
-        .promise(signInWithPopup(auth, provider), {
-          loading: "Loading...",
-          success: "Login Success!",
-          error: "Login Failed...",
-        })
-        .then(() => {
-          router.push("/");
-        });
-    } catch (error) {}
+      await signInWithPopup(auth, provider);
+    } catch (error) {
+      toast.error("Unable to continue with Google", { id: toastId });
+      console.error("Google sign-in error:", error);
+      return;
+    }
+
+    try {
+      await customAxios.get("/auth/continueWithGoogle", { headers: { ForceTokenRefresh: true } });
+
+      toast.success("Successfully signed in", { id: toastId });
+    } catch (error: any) {
+      signOut(auth);
+      toast.error(error.response?.data?.message || "Internal server error", { id: toastId });
+      console.error("User creation error:", error);
+    }
   };
 
   return (
     <div>
-      <SelectUsername />
+      <SelectUsername isOpen={isModalOpen} />
       <div className="flex justify-center font-bold text-2xl mt-40">SignUp</div>
       <div className="flex flex-row justify-center mt-4">
         <div className="flex items-center text-xl font-medium gap-3 rd-block hover:bg-antiqueWhite" onClick={handleGoogleAuth}>
