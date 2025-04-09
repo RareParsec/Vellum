@@ -11,10 +11,10 @@ customAxios.interceptors.request.use(
   async (config) => {
     const ForceTokenRefresh = config.headers.ForceTokenRefresh || false;
     console.log("refreshing token:", ForceTokenRefresh);
-    const token = auth.currentUser?.getIdToken(ForceTokenRefresh);
+    const token = await auth.currentUser?.getIdToken(ForceTokenRefresh);
 
     if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+      config.headers.Authorization = `bearer ${token}`;
     }
     return config;
   },
@@ -22,3 +22,5 @@ customAxios.interceptors.request.use(
     return Promise.reject(error);
   }
 );
+
+export default customAxios;

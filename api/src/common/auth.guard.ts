@@ -16,34 +16,35 @@ export class AuthGuard implements CanActivate {
       this.reflector.get('optionalAuth', context.getHandler()) || false;
 
     const request = context.switchToHttp().getRequest();
-    const token = request.headers['Authorization']?.split(`bearer`)[1];
+    const token = request.headers['authorization']?.split(`bearer `)[1];
 
     if (!token) {
-      if (optionalAuth) {
-        request.user = null;
-        return true;
-      } else {
-        throw new UnauthorizedException('No token provided');
-      }
+      // if (optionalAuth) {
+      //   request.user = null;
+      //   return true;
+      // } else {
+      //   throw new UnauthorizedException('No token provided');
+      // }
+      throw new UnauthorizedException('No token provided');
     }
 
     try {
       const decodedToken = await admin.auth().verifyIdToken(token);
 
       if (!decodedToken) {
-        if (optionalAuth) {
-          request.user = null;
-          return true;
-        }
+        // if (optionalAuth) {
+        //   request.user = null;
+        //   return true;
+        // }
         throw new UnauthorizedException('Invalid token');
       }
 
       const emailVerified = decodedToken.email_verified;
       if (!emailVerified) {
-        if (optionalAuth) {
-          request.user = null;
-          return true;
-        }
+        // if (optionalAuth) {
+        //   request.user = null;
+        //   return true;
+        // }
         throw new UnauthorizedException('Email not verified');
       }
 
@@ -51,10 +52,10 @@ export class AuthGuard implements CanActivate {
     } catch (error) {
       console.error('Error verifying token:', error);
 
-      if (optionalAuth) {
-        request.user = null;
-        return true;
-      }
+      // if (optionalAuth) {
+      //   request.user = null;
+      //   return true;
+      // }
 
       throw new UnauthorizedException('Invalid token');
     }
