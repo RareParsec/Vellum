@@ -15,24 +15,23 @@ export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @Get('continueWithGoogle')
-  continueWithGoogle(@Req() req: Request) {
+  async continueWithGoogle(@Req() req: Request) {
     const user = req['user'];
-    // console.log(user.uid);
 
-    this.authService.continueWithGoogle(user);
+    await this.authService.continueWithGoogle(user);
   }
 
   @Get('signIn')
-  signIn(@Req() req: Request) {
+  async signIn(@Req() req: Request) {
     const user = req['user'];
 
-    return this.authService.signIn(user);
+    await this.authService.signIn(user);
   }
 
   @Get('createUser')
   async createUser(@Req() req: Request) {
     const user = req['user'];
 
-    return this.authService.createUser(user);
+    await this.authService.createUser(user);
   }
 }
