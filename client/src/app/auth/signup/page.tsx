@@ -1,8 +1,9 @@
 "use client";
 
-import SelectUsername from "@/app/components/modals/usernameSelection";
-import customAxios from "@/app/config/axios";
-import { auth, provider } from "@/app/config/firebase";
+import SelectUsername from "@/components/modals/UsernameSelection";
+import customAxios from "@/config/axios";
+import { auth, provider } from "@/config/firebase";
+import { useUserStore } from "@/zustand/userStore";
 import { GoogleLogo } from "@phosphor-icons/react";
 import { AxiosError } from "axios";
 import { signInWithPopup, signOut } from "firebase/auth";
@@ -14,6 +15,8 @@ function SignUp() {
   const router = useRouter();
 
   const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const setUser = useUserStore((state) => state.setUser);
 
   const handleGoogleAuth = async () => {
     const toastId = toast.loading("Loading...");
@@ -27,7 +30,9 @@ function SignUp() {
     }
 
     try {
-      await customAxios.get("/auth/continueWithGoogle", { headers: { ForceTokenRefresh: true } });
+      const res = await customAxios.get("/auth/continueWithGoogle", { headers: { ForceTokenRefresh: true } });
+      const user = res?.data?.user;
+      setUser(user);
 
       toast.success("Successfully signed in", { id: toastId });
     } catch (error: any) {

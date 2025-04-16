@@ -12,8 +12,8 @@ export class AuthGuard implements CanActivate {
   constructor(private reflector: Reflector) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
-    const optionalAuth =
-      this.reflector.get('optionalAuth', context.getHandler()) || false;
+    // const optionalAuth =
+    //   this.reflector.get('optionalAuth', context.getHandler()) || false;
 
     const request = context.switchToHttp().getRequest();
     const token = request.headers['authorization']?.split(`bearer `)[1];

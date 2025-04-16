@@ -2,7 +2,7 @@
 import { Certificate, DotsThreeOutline, ListHeart, Share } from "@phosphor-icons/react";
 import React from "react";
 
-function Post({ expanded = true }: { expanded?: boolean }) {
+function PostStruct({ post, expanded = true }: { post: Post; expanded?: boolean }) {
   const handleMenuClick = () => {
     console.log("Menu clicked");
   };
@@ -33,16 +33,8 @@ function Post({ expanded = true }: { expanded?: boolean }) {
         )}
       </div>
       <div className="mt-2">
-        <div className="font-bold text-lg">
-          Lorem ipsum dolor sit amet consectetur adipisicing elit. Sit quaerat error sed voluptate ipsa earum?
-        </div>
-        <div className={`mt-2 line-clamp-[${expanded ? 0 : 6}]`}>
-          Lorem ipsum dolor sit amet, consectetur adipisicing elit. Quia quasi dolores, mollitia alias quis ipsum veniam nostrum aspernatur
-          ut perspiciatis maiores, a saepe illum obcaecati maxime excepturi deleniti. Adipisci aut architecto exercitationem delectus neque
-          sint dolor iste assumenda quibusdam impedit, corporis consectetur repellat quisquam aliquam tempora quas ad saepe? A incidunt
-          iusto ipsam asperiores neque, accusantium porro soluta id repellat illo officiis quibusdam dolorum rem debitis omnis maxime sunt.
-          Repellat odio incidunt quod cumque iure quas necessitatibus provident totam obcaecati.
-        </div>
+        <div className="font-bold text-lg">{post.title}</div>
+        <div className={`mt-2 line-clamp-[${expanded ? 0 : 6}]`}>{post.body}</div>
       </div>
       <div className={`flex flex-row ${expanded ? "justify-between" : "justify-end"} mt-2`}>
         {expanded && (
@@ -66,4 +58,4 @@ function Post({ expanded = true }: { expanded?: boolean }) {
   );
 }
 
-export default Post;
+export default PostStruct;

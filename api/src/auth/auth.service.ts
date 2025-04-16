@@ -21,10 +21,10 @@ export class AuthService {
 
       if (foundUser) {
         // If the user exists, sign them in
-        this.signIn(user);
+        return await this.signIn(user);
       } else {
         // If the user does not exist, create a new user
-        this.createUser(user);
+        return await this.createUser(user);
       }
     } catch (error) {
       console.error(error);
@@ -53,12 +53,12 @@ export class AuthService {
       const user = await this.prisma.user.create({
         data: {
           id: uid,
-          email: 'dhillonaaspreet@gmail.com',
+          email: email,
           username: `${Math.random().toString(36).substring(2, 15)}`,
           bio: 'This is a bio',
         },
       });
-      return user;
+      return { user };
     } catch (error) {
       console.log(error.message);
       throw error;
@@ -76,7 +76,7 @@ export class AuthService {
         throw new NotFoundException('User not found');
       }
 
-      return user;
+      return { user };
     } catch (error) {
       console.error(error);
       throw error;

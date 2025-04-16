@@ -18,20 +18,20 @@ export class AuthController {
   async continueWithGoogle(@Req() req: Request) {
     const user = req['user'];
 
-    await this.authService.continueWithGoogle(user);
+    return await this.authService.continueWithGoogle(user);
   }
 
   @Get('signIn')
   async signIn(@Req() req: Request) {
     const user = req['user'];
 
-    await this.authService.signIn(user);
+    return await this.authService.signIn(user);
   }
 
   @Get('createUser')
   async createUser(@Req() req: Request) {
     const user = req['user'];
 
-    await this.authService.createUser(user);
+    return await this.authService.createUser(user);
   }
 }

@@ -1,0 +1,37 @@
+import { create } from "zustand";
+import { combine } from "zustand/middleware";
+import customAxios from "../config/axios";
+
+interface User {
+  id: string;
+  username: string;
+  email: string;
+  bio: string;
+  timestamp: Date;
+}
+
+export const useUserStore = create(
+  combine(
+    () => ({
+      user: null as User | null,
+    }),
+    (set) => ({
+      setUser: (user: User) => set({ user }),
+      clearUser: () => set({ user: null }),
+      refreshUser: async () => {
+        try {
+          const response = await customAxios.get("/auth/signIn", { headers: { ForceTokenRefresh: true } });
+          const user = response?.data?.user;
+          if (user) {
+            set({ user });
+          } else {
+            set({ user: null });
+          }
+        } catch (error) {
+          console.error("Error refreshing user:", error);
+          set({ user: null });
+        }
+      },
+    })
+  )
+);

@@ -26,23 +26,23 @@ model User {
 }
 
 model Post {
-  id        Int      @id @default(autoincrement())
+  id        String   @id @default(uuid())
   user_id   String   @db.VarChar(255)
   title     String   @db.VarChar(255)
   body      String   @db.Text
   timestamp DateTime @default(now())
 
   user     User      @relation(fields: [user_id], references: [id])
-  hashtags HashTag[] @relation("PostToHashTag")
+  hashtags Hashtag[] @relation("PostToHashTag")
 
   comments Comment[]
 }
 
 model Comment {
-  id                Int      @id @default(autoincrement())
+  id                String   @id @default(uuid())
   user_id           String   @db.VarChar(255)
-  post_id           Int
-  parent_comment_id Int?
+  post_id           String
+  parent_comment_id String?
   content           String   @db.Text
   timestamp         DateTime @default(now())
 
@@ -54,7 +54,7 @@ model Comment {
 }
 
 model PostVote {
-  post_id   Int
+  post_id   String
   user_id   String
   vote_type String
 
@@ -63,7 +63,7 @@ model PostVote {
 }
 
 model CommentVote {
-  comment_id Int
+  comment_id String
   user_id    String
   vote_type  String
 
@@ -72,14 +72,15 @@ model CommentVote {
 }
 
 model PostView {
-  post_id Int
+  post_id String
   user_id String
 
   @@id([post_id, user_id])
   @@index([user_id])
+  @@index([post_id])
 }
 
-model HashTag {
+model Hashtag {
   value String @id @db.VarChar(255)
   posts Post[] @relation("PostToHashTag")
 }

@@ -1,18 +1,23 @@
+"use client";
 import Image from "next/image";
-import Post from "./components/post";
+import { useRef, useState } from "react";
+import { Rnd } from "react-rnd";
 
 export default function Home() {
   return (
-    <div className="flex justify-center">
-      <div className="w-[500px] mt-30">
-        {Array(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14).map((e) => {
-          return (
-            <div className="mb-10">
-              <Post key={e} />
-            </div>
-          );
-        })}
+    <Rnd
+      default={{
+        x: 0,
+        y: 0,
+        width: 320,
+        height: 200,
+      }}
+      dragHandleClassName="handle"
+    >
+      <div className="bg-red-500 w-full h-full flex">
+        <div className="w-full h-10 bg-blue-500 handle"></div>
+        <input type="text" className="flex-grow" />
       </div>
-    </div>
+    </Rnd>
   );
 }
