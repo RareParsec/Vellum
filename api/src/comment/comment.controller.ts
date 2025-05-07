@@ -1,7 +1,9 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
+  Param,
   Post,
   Req,
   UseGuards,
@@ -10,6 +12,7 @@ import {
 import { CommentService } from './comment.service';
 import { AuthGuard } from 'src/common/auth.guard';
 import { CreateCommentDTO } from './dtos/create-comment.dto';
+import { MdFormatPipe } from 'src/common/md-format.pipe';
 
 @Controller('comment')
 export class CommentController {
@@ -21,9 +24,19 @@ export class CommentController {
     @Body(new ValidationPipe({ transform: true, whitelist: true }))
     body: CreateCommentDTO,
     @Req() req: any,
+    @Body('content', new MdFormatPipe())
+    content: string,
   ) {
     const user = req.user;
 
-    return await this.commentService.createComment(body, user);
+    return await this.commentService.createComment({ ...body, content }, user);
+  }
+
+  @Delete(':id')
+  @UseGuards(AuthGuard)
+  async deletePost(@Param('id') id: string, @Req() req: Request) {
+    const user = req['user'];
+
+    return await this.commentService.deleteComment(id, user);
   }
 }

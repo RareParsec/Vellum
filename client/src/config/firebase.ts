@@ -4,7 +4,7 @@ import { GoogleAuthProvider } from "firebase/auth";
 
 const provider = new GoogleAuthProvider();
 
-var firebaseConfig = {
+const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_API_KEY,
   authDomain: process.env.NEXT_PUBLIC_PROJECT_ID + ".firebaseapp.com",
   projectId: process.env.NEXT_PUBLIC_PROJECT_ID,

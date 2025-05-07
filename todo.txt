@@ -1,0 +1,10 @@
+finish comments
+finish homepage
+finish search
+
+finish other buttons -
+    subscribe
+    share
+    menu buttons
+
+connect auth to main application

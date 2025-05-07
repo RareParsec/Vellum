@@ -12,9 +12,9 @@ interface User {
 
 export const useUserStore = create(
   combine(
-    () => ({
+    {
       user: null as User | null,
-    }),
+    },
     (set) => ({
       setUser: (user: User) => set({ user }),
       clearUser: () => set({ user: null }),

@@ -10,7 +10,7 @@ customAxios.defaults.headers.post["Content-Type"] = "application/json";
 customAxios.interceptors.request.use(
   async (config) => {
     const ForceTokenRefresh = config.headers.ForceTokenRefresh || false;
-    console.log("refreshing token:", ForceTokenRefresh);
+    // console.log("refreshing token:", ForceTokenRefresh);
     const token = await auth.currentUser?.getIdToken(ForceTokenRefresh);
 
     if (token) {

@@ -1,4 +1,11 @@
-import { IsEnum, IsNotEmpty, IsString } from 'class-validator';
+import { Transform } from 'class-transformer';
+import {
+  IsEnum,
+  IsNotEmpty,
+  IsString,
+  MinLength,
+  minLength,
+} from 'class-validator';
 
 enum CommentType {
   POST = 'POST',
@@ -16,6 +23,7 @@ export class CreateCommentDTO {
   @IsNotEmpty({ message: 'id must not be empty' })
   targetId: string;
 
+  @IsString({ message: 'content must be a string' })
   @IsNotEmpty({ message: 'content must not be empty' })
   content: string;
 }

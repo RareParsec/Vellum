@@ -1,9 +1,11 @@
-type Comment = {
+// Comment type already exists in typescript, the 'Type' at the end is required.
+type CommentType = {
   id: string;
   user_id: string;
   post_id: string;
   parent_comment_id?: string | null;
   content: string;
+  comments: CommentType[]; // Nested comments
   timestamp: string;
 };
 
@@ -26,5 +28,5 @@ type Post = {
     value: string;
   }[];
 
-  comments: Comment[];
+  comments: CommentType[];
 };

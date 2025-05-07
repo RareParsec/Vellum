@@ -1,10 +1,13 @@
 "use client";
 import customAxios from "@/config/axios";
-import { TextB, TextItalic, TextStrikethrough, User } from "@phosphor-icons/react";
+import { TextB, TextItalic, TextStrikethrough } from "@phosphor-icons/react";
+import { useRouter } from "next/navigation";
 import React, { useRef, useState } from "react";
 import toast from "react-hot-toast";
 
 function Create() {
+  const router = useRouter();
+
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
   const [hashtagValue, setHashtagValue] = useState("");
@@ -65,26 +68,21 @@ function Create() {
         hashtags,
       });
 
-      if (res.status === 201) {
-        toast.success("Post created successfully!", { id: toastId });
-      } else {
-        toast.error("Failed to create post", { id: toastId });
-      }
+      toast.success("Post created successfully!", { id: toastId });
+      router.push("/post/" + res.data.id);
     } catch (error: any) {
       const { response } = error;
-
       const message = response?.data?.message || "Failed to create post";
-
       toast.error(Array.isArray(message) ? message[0] : message, { id: toastId });
     }
   };
 
   return (
-    <div className="w-[500px] h-full mb-[20%] mt-5 rd-block flex flex-col p-2 pb-0">
-      <div className="flex flex-col gap-2 px-2 pt-2 flex-grow ">
+    <div className="defined-w min-w-0 flex flex-col gap-4 h-fit rd-block p-2">
+      <div className="flex flex-col gap-2 px-2 pt-2 flex-grow">
         <input
           placeholder="title..."
-          className="font-semibold text-lg outline-none"
+          className="font-semibold text-xl outline-none"
           value={title}
           onChange={(e) => {
             if (e.target.value.length > 50) return;
@@ -94,15 +92,15 @@ function Create() {
         <textarea
           ref={textareaRef}
           placeholder="title..."
-          className="text-sm h-full resize-none outline-none"
+          className="text-base h-full resize-none outline-none min-h-[50vh]"
           value={body}
           onChange={(e) => setBody(e.target.value)}
           onFocus={() => setTextAreaFocused(true)}
           onBlur={() => setTextAreaFocused(false)}
         />
       </div>
-      <div className="rd-block bg-isabelline mb-2 p-[2px]">
-        <div className="flex flex-row gap-x-5 gap-y-1 px-2 py-1 text-[13px] font-light flex-wrap">
+      <div className="rd-block bg-isabelline mb-2 p-1">
+        <div className="flex flex-row gap-x-6 gap-y-2 px-3 py-2 text-sm font-light flex-wrap">
           {hashtags.map((hashtag) => (
             <button
               className="flex flex-row gap-1 items-center hover:line-through cursor-pointer"
@@ -113,7 +111,7 @@ function Create() {
                 });
               }}
             >
-              <div className="text-[10px] font-bold">#</div>
+              <div className="text-xs font-bold">#</div>
               <div>{hashtag}</div>
             </button>
           ))}
@@ -121,7 +119,7 @@ function Create() {
             <input
               type="text"
               placeholder="add another..."
-              className="text-[12px] outline-none w-full"
+              className="text-sm outline-none w-full"
               value={hashtagValue}
               onChange={(e) => {
                 const value = e.target.value.replace(/\s/g, "");
@@ -143,43 +141,43 @@ function Create() {
             />
           </div>
         </div>
-        <div className="flex flex-row mt-1 justify-between">
-          <div className="flex flex-row ml-1 items-center">
+        <div className="flex flex-row mt-2 justify-between">
+          <div className="flex flex-row ml-2 items-center gap-1">
             <button
-              className="p-1 rd-block bg-isabelline rounded-sm hover:bg-linen cursor-pointer"
+              className="p-2 rd-block bg-isabelline rounded-sm hover:bg-linen cursor-pointer"
               onMouseDown={(e) => e.preventDefault()}
               onClick={() => {
                 handleStyling("bold");
               }}
               disabled={!textAreaFocused}
             >
-              <TextB size={17} color="var(--color-deepBeaver)" />
+              <TextB size={20} color="var(--color-deepBeaver)" />
             </button>
             <button
-              className="p-1 rd-block bg-isabelline rounded-sm hover:bg-linen cursor-pointer"
+              className="p-2 rd-block bg-isabelline rounded-sm hover:bg-linen cursor-pointer"
               onMouseDown={(e) => e.preventDefault()}
               onClick={() => {
                 handleStyling("italic");
               }}
               disabled={!textAreaFocused}
             >
-              <TextItalic size={17} color="var(--color-deepBeaver)" />
+              <TextItalic size={20} color="var(--color-deepBeaver)" />
             </button>
             <button
-              className="p-1 rd-block bg-isabelline rounded-sm hover:bg-linen cursor-pointer"
+              className="p-2 rd-block bg-isabelline rounded-sm hover:bg-linen cursor-pointer"
               onMouseDown={(e) => e.preventDefault()}
               onClick={() => {
                 handleStyling("strikethrough");
               }}
               disabled={!textAreaFocused}
             >
-              <TextStrikethrough size={17} color="var(--color-deepBeaver)" />
+              <TextStrikethrough size={20} color="var(--color-deepBeaver)" />
             </button>
-            <div className=" text-[12px] font-extralight ml-1 mt-[2px]">
+            <div className="text-sm font-extralight ml-2 mt-[2px]">
               <p>Markdown supported!</p>
             </div>
           </div>
-          <button className="px-3 py-1 mr-2 rd-block bg-isabelline hover:bg-linen cursor-pointer" onClick={handlePost}>
+          <button className="px-4 py-2 mr-2 rd-block bg-isabelline hover:bg-linen cursor-pointer text-base" onClick={handlePost}>
             Post
           </button>
         </div>

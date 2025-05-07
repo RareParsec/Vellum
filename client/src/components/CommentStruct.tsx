@@ -1,13 +1,16 @@
 "use client";
 import { ArrowBendUpLeft, Certificate, DotsThreeOutline, ListHeart, Share } from "@phosphor-icons/react";
 import React from "react";
+import ReactMarkdown from "react-markdown";
+import remarkBreaks from "remark-breaks";
+import remarkGfm from "remark-gfm";
 
 function CommentStruct({
   comment,
   isReplyingTo = false,
   setWritingToId,
 }: {
-  comment: Comment;
+  comment: CommentType;
   isReplyingTo: boolean;
   setWritingToId: (id: string) => void;
 }) {
@@ -32,7 +35,7 @@ function CommentStruct({
   };
 
   return (
-    <div className="rd-block">
+    <div className="rd-block rounded-bl-none">
       <div className="flex flex-row justify-between text-sm">
         <div className={`flex flex-row gap-2`}>
           <div className="font-semibold">Azolight_</div>
@@ -44,7 +47,9 @@ function CommentStruct({
         </button>
       </div>
       <div className="mt-2">
-        <div className={`mt-2`}>{comment.content}</div>
+        <div className={`mt-2`}>
+          <ReactMarkdown remarkPlugins={[remarkGfm, remarkBreaks]}>{comment.content}</ReactMarkdown>
+        </div>
       </div>
       <div className={`flex flex-row justify-between mt-2`}>
         <div className="flex flex-row gap-2">

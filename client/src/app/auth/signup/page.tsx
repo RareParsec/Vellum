@@ -1,22 +1,20 @@
 "use client";
 
-import SelectUsername from "@/components/modals/UsernameSelection";
+// import SelectUsername from "@/components/modals/usernameSelection";
 import customAxios from "@/config/axios";
 import { auth, provider } from "@/config/firebase";
 import { useUserStore } from "@/zustand/userStore";
-import { GoogleLogo } from "@phosphor-icons/react";
-import { AxiosError } from "axios";
+import { GoogleLogo } from "@phosphor-icons/react/dist/icons/GoogleLogo";
 import { signInWithPopup, signOut } from "firebase/auth";
 import { useRouter } from "next/navigation";
-import React, { useState } from "react";
+import React from "react";
 import toast from "react-hot-toast";
 
 function SignUp() {
-  const router = useRouter();
-
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  // const [isModalOpen, setIsModalOpen] = useState(false);
 
   const setUser = useUserStore((state) => state.setUser);
+  const router = useRouter();
 
   const handleGoogleAuth = async () => {
     const toastId = toast.loading("Loading...");
@@ -31,20 +29,23 @@ function SignUp() {
 
     try {
       const res = await customAxios.get("/auth/continueWithGoogle", { headers: { ForceTokenRefresh: true } });
-      const user = res?.data?.user;
-      setUser(user);
 
       toast.success("Successfully signed in", { id: toastId });
+
+      setUser(res.data.user);
+      router.replace("/");
     } catch (error: any) {
       signOut(auth);
-      toast.error(error.response?.data?.message || "Internal server error", { id: toastId });
-      console.error("User creation error:", error);
+
+      const { response } = error;
+      const message = response?.data?.message || "Internal server error";
+      toast.error(Array.isArray(message) ? message[0] : message, { id: toastId });
     }
   };
 
   return (
     <div>
-      <SelectUsername isOpen={isModalOpen} />
+      {/* <SelectUsername isOpen={isModalOpen} /> */}
       <div className="flex justify-center font-bold text-2xl mt-40">SignUp</div>
       <div className="flex flex-row justify-center mt-4">
         <div className="flex items-center text-xl font-medium gap-3 rd-block hover:bg-antiqueWhite" onClick={handleGoogleAuth}>

@@ -11,20 +11,23 @@ import admin from 'src/config/adminSDK';
 export class AuthGuard implements CanActivate {
   constructor(private reflector: Reflector) {}
 
+  private allowIfOptionalAuth(context: ExecutionContext) {
+    const request = context.switchToHttp().getRequest();
+    request.user = null;
+    return true;
+  }
+
   async canActivate(context: ExecutionContext): Promise<boolean> {
-    // const optionalAuth =
-    //   this.reflector.get('optionalAuth', context.getHandler()) || false;
+    const optionalAuth =
+      this.reflector.get<boolean>('OptionalAuth', context.getHandler()) ||
+      false;
 
     const request = context.switchToHttp().getRequest();
     const token = request.headers['authorization']?.split(`bearer `)[1];
 
     if (!token) {
-      // if (optionalAuth) {
-      //   request.user = null;
-      //   return true;
-      // } else {
-      //   throw new UnauthorizedException('No token provided');
-      // }
+      if (optionalAuth) return this.allowIfOptionalAuth(context);
+
       throw new UnauthorizedException('No token provided');
     }
 
@@ -32,19 +35,15 @@ export class AuthGuard implements CanActivate {
       const decodedToken = await admin.auth().verifyIdToken(token);
 
       if (!decodedToken) {
-        // if (optionalAuth) {
-        //   request.user = null;
-        //   return true;
-        // }
+        if (optionalAuth) return this.allowIfOptionalAuth(context);
+
         throw new UnauthorizedException('Invalid token');
       }
 
       const emailVerified = decodedToken.email_verified;
       if (!emailVerified) {
-        // if (optionalAuth) {
-        //   request.user = null;
-        //   return true;
-        // }
+        if (optionalAuth) return this.allowIfOptionalAuth(context);
+
         throw new UnauthorizedException('Email not verified');
       }
 
@@ -52,10 +51,7 @@ export class AuthGuard implements CanActivate {
     } catch (error) {
       console.error('Error verifying token:', error);
 
-      // if (optionalAuth) {
-      //   request.user = null;
-      //   return true;
-      // }
+      if (optionalAuth) return this.allowIfOptionalAuth(context);
 
       throw new UnauthorizedException('Invalid token');
     }

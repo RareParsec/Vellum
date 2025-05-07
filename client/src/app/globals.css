@@ -14,6 +14,7 @@
   --color-isabelline: #f8f5f2;
   --color-whisperBlush: #f2dfdb;
   --color-linen: #f4ede3;
+  --color-toastedLinen: #f1e8da;
   --color-antiqueWhite: #f0e4d1;
   --color-dun: #cabaa7;
   --color-beaver: #a4907c;
@@ -55,4 +56,57 @@ body {
     -ms-overflow-style: none;
     scrollbar-width: none;
   }
+  .defined-w {
+    width: 75vw;
+    max-width: 700px;
+  }
+}
+
+/* In your global CSS file */
+@layer base {
+  h1 {
+    @apply text-[19px] font-bold my-1;
+  }
+  h2 {
+    @apply text-[17px] font-bold my-1;
+  }
+  h3 {
+    @apply text-[16px] font-bold my-1;
+  }
+  code {
+    @apply border border-beaver rounded-md px-2 bg-whisperBlush py-[1px];
+  }
+  a {
+    @apply text-beaver underline hover:text-deepBeaver;
+  }
+  ul {
+    @apply list-disc list-inside;
+  }
+  ol {
+    @apply list-decimal list-inside;
+  }
+}
+/* **Hello World**
+*Hello World*
+~~Hello World~~
+# Hello World
+## Hello World
+### Hello World
+> Hello World
+`Hello World`
+```
+Hello World
+```
+[Hello World](https://example.com)
+- Hello World
+1. Hello World
+---
+Hello World[^1]
+[^1]: Note text
+| Hello | World |
+| ----- | ----- |
+| Hello | World | */
+
+.parent:hover:has(.child:hover) {
+  background-color: var(--color-linen); /* blue-200 (original color) */
 }
