@@ -5,9 +5,19 @@ import { AuthModule } from './auth/auth.module';
 import { CommonModule } from './common/common.module';
 import { PostModule } from './post/post.module';
 import { CommentModule } from './comment/comment.module';
+import { UserModule } from './user/user.module';
+import { NotificationsModule } from './notifications/notifications.module';
 
 @Module({
-  imports: [CommonModule, AuthModule, PostModule, CommentModule],
+  imports: [
+    CommonModule,
+    AuthModule,
+    PostModule,
+    CommentModule,
+    UserModule,
+    NotificationsModule,
+  ],
+
   controllers: [AppController],
   providers: [AppService],
 })

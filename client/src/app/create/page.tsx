@@ -1,8 +1,9 @@
 "use client";
 import customAxios from "@/config/axios";
+import { auth } from "@/config/firebase";
 import { TextB, TextItalic, TextStrikethrough } from "@phosphor-icons/react";
 import { useRouter } from "next/navigation";
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
 
 function Create() {
@@ -76,6 +77,12 @@ function Create() {
       toast.error(Array.isArray(message) ? message[0] : message, { id: toastId });
     }
   };
+
+  useEffect(() => {
+    if (!auth.currentUser) {
+      router.push("/auth/signin");
+    }
+  }, []);
 
   return (
     <div className="defined-w min-w-0 flex flex-col gap-4 h-fit rd-block p-2">

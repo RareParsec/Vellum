@@ -5,6 +5,7 @@ import React, { useEffect, useRef } from "react";
 import { useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import toast from "react-hot-toast";
+import { useStoredPostsStore } from "@/zustand/storedPostsStore";
 
 function Search() {
   const [searchValue, setSearchValue] = useState("");
@@ -17,12 +18,12 @@ function Search() {
 
   const showBackButtonRoutes = ["/post"];
 
+  const clearStoredPosts = useStoredPostsStore((state) => state.clearPosts);
+
   const searchRef = useRef<HTMLInputElement>(null);
 
   const handleSearch = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-
-    console.log("form submitted");
 
     if (searchValue === "") {
       searchRef.current?.blur();
@@ -37,7 +38,11 @@ function Search() {
 
     searchRef.current?.blur();
     setOpen(false);
-    router.push(`/search?q=${searchValue}`);
+
+    if (pathname.includes("/search")) {
+      clearStoredPosts(pathname);
+    }
+    router.replace(`/search?q=${searchValue}`);
   };
 
   useEffect(() => {
@@ -53,14 +58,14 @@ function Search() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.05 }}
-            className="absolute top-0 left-0 h-full w-full backdrop-blur-[5px] z-5"
+            className="absolute top-0 left-0 h-full w-full backdrop-blur-[5px] z-20"
             onClick={() => {
               setOpen(false);
             }}
           />
         )}
       </AnimatePresence>
-      <div className="flex flex-col my-1 mt-3 top-1 rd-block border-2 border-isabelline sticky z-10 w-full">
+      <div className="flex flex-col my-1 mt-3 top-1 rd-block border-2 border-isabelline sticky z-30 w-full">
         <div
           className="flex flex-row items-center h-fit text-center gap-1 cursor-pointer hover:cursor-text"
           onClick={() => {
@@ -80,15 +85,16 @@ function Search() {
           </form>
         </div>
 
-        {showBackButtonRoutes.map((route) => pathname.includes(route)).includes(true) && (
-          <div className="absolute right-full top-[72px] mr-6 hover:cursor-pointer">
-            <div
-              className="flex flex-row font-bold text-rosyBrownDark items-center text-[14px]"
-              onClick={() => {
-                router.back();
-              }}
-            >
-              <CaretLeft size={18} weight="bold" color="var(--color-rosyBrownDark)" />
+        {pathname !== "/" && (
+          // showBackButtonRoutes.map((route) => pathname.includes(route)).includes(true)
+          <div
+            className="absolute right-full hover:cursor-pointer top-0 rd-block py-3 border-isabelline border-x-8"
+            onClick={() => {
+              router.back();
+            }}
+          >
+            <div className="flex flex-row font-bold items-center text-[14px]">
+              <CaretLeft size={18} weight="bold" color="var(--color-deepMocha)" />
               Back
             </div>
           </div>

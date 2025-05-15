@@ -2,32 +2,19 @@ import { create } from "zustand";
 import { combine } from "zustand/middleware";
 
 export type Notification = {
+  id: string;
+  user_id: string;
+  post_id?: string;
+  comment_id?: string;
   message: string;
   viewed: boolean;
-  otherData: any;
+  timestamp: Date;
 };
 
 export const useNotificationsStore = create(
   combine(
     {
-      notifications: [
-        {
-          message: "Welcome to the app!",
-          viewed: false,
-          otherData: {},
-        },
-
-        {
-          message: "You have a new message.",
-          viewed: false,
-          otherData: {},
-        },
-        {
-          message: "Your profile was updated.",
-          viewed: true,
-          otherData: {},
-        },
-      ] as Notification[],
+      notifications: [] as Notification[],
     },
 
     (set, get) => ({
@@ -36,7 +23,20 @@ export const useNotificationsStore = create(
       },
       addNotification: (notification: Notification) => {
         set((state) => ({
-          notifications: [...state.notifications, notification],
+          notifications: [notification, ...state.notifications],
+        }));
+      },
+      deleteNotifications: () => {
+        set({ notifications: [] });
+      },
+      deleteNotification: (id: string) => {
+        set((state) => ({
+          notifications: state.notifications.filter((notif) => notif.id !== id),
+        }));
+      },
+      markAsViewed: (id: string) => {
+        set((state) => ({
+          notifications: state.notifications.map((notif) => (notif.id === id ? { ...notif, viewed: true } : notif)),
         }));
       },
     })

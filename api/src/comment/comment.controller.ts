@@ -6,6 +6,7 @@ import {
   Param,
   Post,
   Req,
+  SetMetadata,
   UseGuards,
   ValidationPipe,
 } from '@nestjs/common';
@@ -17,6 +18,13 @@ import { MdFormatPipe } from 'src/common/md-format.pipe';
 @Controller('comment')
 export class CommentController {
   constructor(private readonly commentService: CommentService) {}
+
+  @Get('user/:username')
+  @UseGuards(AuthGuard)
+  @SetMetadata('OptionalAuth', true)
+  async getUserComments(@Param('username') id: string) {
+    return await this.commentService.getUserComments(id);
+  }
 
   @Post('create')
   @UseGuards(AuthGuard)

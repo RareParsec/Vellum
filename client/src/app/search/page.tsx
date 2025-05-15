@@ -1,50 +1,70 @@
 "use client";
 import PostStruct from "@/components/PostStruct";
-import Search from "@/components/Search";
 import customAxios from "@/config/axios";
 import { useRouteScrollStore } from "@/zustand/routeScrollStore";
+import { useStoredPostsStore } from "@/zustand/storedPostsStore";
 import { usePathname, useSearchParams } from "next/navigation";
-import React, { Suspense, useEffect, useRef, useState } from "react";
+import React, { Suspense, useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import Skeleton from "react-loading-skeleton";
 
-function SearchPage() {
+function SearchClient() {
   const searchParams = useSearchParams();
 
   const [posts, setPosts] = useState<Post[]>([]);
 
   const [loading, setLoading] = useState(true);
 
+  const getStoredPosts = useStoredPostsStore((state) => state.getPosts);
+  const setStoredPosts = useStoredPostsStore((state) => state.setPosts);
+
   const triggerScroll = useRouteScrollStore((state) => state.triggerScroll);
 
-  useEffect(() => {
-    console.log("search params", searchParams.get("q"));
-    const fetchPosts = async () => {
-      try {
-        const res = await customAxios.get(`/post/search?q=${searchParams.get("q")}`);
+  const [allowTriggerScroll, setAllowTriggerScroll] = useState(true);
 
-        if (res.data.length === 0) {
-          return setPosts([]);
-        }
+  const pathname = usePathname();
 
-        setPosts(res.data);
-      } catch (error: any) {
-        const { response } = error;
-        const message = response?.data?.message || "Failed to load posts";
-        toast.error(Array.isArray(message) ? message[0] : message);
+  const fetchPosts = async () => {
+    try {
+      const res = await customAxios.get(`/post/search?q=${searchParams.get("q")}`);
 
-        console.error(error);
-      } finally {
-        setLoading(false);
+      if (res.data.length === 0) {
+        return setPosts([]);
       }
-    };
 
-    fetchPosts();
-  }, [searchParams]);
+      setPosts(res.data);
+    } catch (error: any) {
+      const { response } = error;
+      const message = response?.data?.message || "Failed to load posts";
+      toast.error(Array.isArray(message) ? message[0] : message);
+
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
+    setTimeout(() => {
+      setStoredPosts(pathname, posts);
+    }, 100);
+
+    if (!allowTriggerScroll || posts.length == 0) return;
+    console.log("triggering scroll");
     triggerScroll();
+    setAllowTriggerScroll(false);
   }, [posts]);
+
+  useEffect(() => {
+    const storedPosts = getStoredPosts(pathname);
+
+    if (storedPosts && storedPosts.length > 0) {
+      setPosts(storedPosts);
+      setLoading(false);
+    } else {
+      fetchPosts();
+    }
+  }, [searchParams]);
 
   return (
     <div className="defined-w min-w-0 flex flex-col gap-4 h-fit">
@@ -80,6 +100,14 @@ function SearchPage() {
         );
       })}
     </div>
+  );
+}
+
+function SearchPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <SearchClient />
+    </Suspense>
   );
 }
 

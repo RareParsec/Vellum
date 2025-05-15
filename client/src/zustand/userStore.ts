@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { combine } from "zustand/middleware";
 import customAxios from "../config/axios";
+import { auth } from "@/config/firebase";
 
 interface User {
   id: string;
@@ -20,8 +21,9 @@ export const useUserStore = create(
       clearUser: () => set({ user: null }),
       refreshUser: async () => {
         try {
+          if (!auth.currentUser) return;
           const response = await customAxios.get("/auth/signIn", { headers: { ForceTokenRefresh: true } });
-          const user = response?.data?.user;
+          const user = response?.data;
           if (user) {
             set({ user });
           } else {

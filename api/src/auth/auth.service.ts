@@ -1,5 +1,7 @@
 import {
+  HttpException,
   Injectable,
+  InternalServerErrorException,
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
@@ -15,24 +17,22 @@ export class AuthService {
       // Check if the user exists
       const foundUser = await this.prisma.user.findFirst({
         where: {
-          OR: [{ email: email }, { id: uid }],
+          id: uid,
         },
       });
 
       if (foundUser) {
-        // If the user exists, sign them in
-        return await this.signIn(user);
+        return await this.signIn({ uid: user.uid });
       } else {
-        // If the user does not exist, create a new user
-        return await this.createUser(user);
+        return 'user-not-yet-created';
       }
     } catch (error) {
       console.error(error);
-      throw error;
+      throw new InternalServerErrorException('Error signing in');
     }
   }
 
-  async createUser({ uid, email }) {
+  async createUser({ uid, email }, username: string) {
     try {
       // Check if email exists
       const existingEmail = await this.prisma.user.findUnique({
@@ -54,14 +54,15 @@ export class AuthService {
         data: {
           id: uid,
           email: email,
-          username: `${Math.random().toString(36).substring(2, 15)}`,
+          username: username,
           bio: 'This is a bio',
         },
       });
       return { user };
     } catch (error) {
+      if (error instanceof HttpException) return error;
       console.log(error.message);
-      throw error;
+      throw new InternalServerErrorException('Error creating user');
     }
   }
 
@@ -76,10 +77,10 @@ export class AuthService {
         throw new NotFoundException('User not found');
       }
 
-      return { user };
+      return user;
     } catch (error) {
       console.error(error);
-      throw error;
+      throw new InternalServerErrorException('Error signing in');
     }
   }
 }

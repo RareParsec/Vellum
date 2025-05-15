@@ -1,23 +1,28 @@
 "use client";
-import { Suspense, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import customAxios from "@/config/axios";
 import PostStruct from "@/components/PostStruct";
-import { useHmFeedStore } from "@/zustand/hmFeedStore";
-import Search from "@/components/Search";
 import Skeleton from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
 import { useRouteScrollStore } from "@/zustand/routeScrollStore";
 import { usePathname } from "next/navigation";
 import toast from "react-hot-toast";
+import { useStoredPostsStore } from "@/zustand/storedPostsStore";
+import { useInView } from "react-intersection-observer";
+import { globalScrollRef } from "@/components/AppShell";
 
 export default function Home() {
   const [posts, setPosts] = useState<Post[]>([]);
-  const storedPosts = useHmFeedStore((state) => state.posts);
-  const setStoredPosts = useHmFeedStore((state) => state.setPosts);
+  const getStoredPosts = useStoredPostsStore((state) => state.getPosts);
+  const setStoredPosts = useStoredPostsStore((state) => state.setPosts);
 
   const triggerScroll = useRouteScrollStore((state) => state.triggerScroll);
 
+  const { ref, inView } = useInView({ threshold: 0.1 });
   const [loading, setLoading] = useState(true);
+  const [fetchingMore, setFetchingMore] = useState(false);
+
+  const pathname = usePathname();
 
   const fetchPosts = async () => {
     try {
@@ -45,28 +50,64 @@ export default function Home() {
     setLoading(false);
   };
 
-  const _concatenateMorePosts = async () => {
+  const concatenateMorePosts = async () => {
     const res = await fetchPosts();
-    if (res) {
+    const currentPostIds = posts.map((post) => post.id);
+    const newPosts = res.filter((post: Post) => !currentPostIds.includes(post.id));
+    if (newPosts.length === 0 && res) {
       setPosts((prev) => [...prev, ...res]);
+    } else {
+      setPosts((prev) => [...prev, ...newPosts]);
     }
+    setFetchingMore(false);
   };
 
   useEffect(() => {
+    if (inView) {
+      console.log("fetching more posts");
+      if (fetchingMore) return;
+      setFetchingMore(true);
+      concatenateMorePosts();
+    }
+  }, [inView]);
+
+  useEffect(() => {
     setTimeout(() => {
-      setStoredPosts(posts);
+      setStoredPosts(pathname, posts);
+      // console.log("storing posts", posts);
     }, 100);
 
     triggerScroll();
   }, [posts]);
 
   useEffect(() => {
-    if (storedPosts.length > 0) {
+    const storedPosts = getStoredPosts(pathname);
+
+    if (storedPosts && storedPosts.length > 0) {
       setPosts(storedPosts);
       setLoading(false);
     } else {
       refreshFeed();
     }
+
+    window.addEventListener("beforeunload", (e) => {
+      console.log("unloading");
+    });
+
+    return () => {
+      console.log("unmounting" + globalScrollRef.current?.scrollTop);
+    };
+  }, []);
+
+  useEffect(() => {
+    const saveScrollPosition = () => {
+      sessionStorage.setItem("feed-scroll", String("deoido"));
+    };
+
+    window.addEventListener("beforeunload", saveScrollPosition);
+    return () => {
+      window.removeEventListener("beforeunload", saveScrollPosition);
+    };
   }, []);
 
   return (
@@ -97,11 +138,22 @@ export default function Home() {
       {posts.map((post, index) => {
         // if(index > 3) {return;}
         return (
-          <div key={post.id} className="">
+          <div key={post.id} className="" ref={index == posts.length - 3 ? ref : null}>
             <PostStruct post={post} expanded={false} />
           </div>
         );
       })}
+
+      <button
+        onClick={() => {
+          if (fetchingMore) return;
+          setFetchingMore(true);
+          concatenateMorePosts();
+        }}
+        className="rd-block h-16 font-semibold flex flex-row justify-center items-center cursor-pointer"
+      >
+        {fetchingMore ? "Fetching..." : "Click here to fetch more posts!"}
+      </button>
     </div>
   );
 }

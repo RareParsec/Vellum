@@ -2,9 +2,9 @@
 
 import CommentStruct from "@/components/CommentStruct";
 import PostStruct from "@/components/PostStruct";
-import Search from "@/components/Search";
 import WriteBlock from "@/components/WriteBlock";
 import customAxios from "@/config/axios";
+import errorHandler from "@/utils/errorHandler";
 import { useRouteScrollStore } from "@/zustand/routeScrollStore";
 import { useParams, useRouter } from "next/navigation";
 import React, { useEffect, useState } from "react";
@@ -12,7 +12,6 @@ import toast from "react-hot-toast";
 
 function Post() {
   const { id } = useParams();
-  const _router = useRouter();
 
   const [post, setPost] = useState<Post | null>(null);
   const [text, setText] = useState<string>("");
@@ -27,13 +26,11 @@ function Post() {
   useEffect(() => {
     const fetchPost = async () => {
       try {
-        const res = await customAxios.get(`/post/${id}?depth=2`);
+        const res = await customAxios.get(`/post/${id}`);
 
         setPost(res.data);
       } catch (error: any) {
-        const { response } = error;
-        const message = response?.data?.message || "Failed to load post";
-        toast.error(Array.isArray(message) ? message[0] : message);
+        errorHandler(error);
       } finally {
         setLoading(false);
       }
@@ -122,7 +119,7 @@ function Post() {
   }
 
   return (
-    <div className="defined-w min-w-0 flex flex-col gap-4 h-fit">
+    <div className="defined-w min-w-0 flex flex-col gap-4 h-fit items-center">
       <PostStruct post={post} />
       <div
         className={`w-[90%] rd-block mt-4 py-2 hover:cursor-text ${writingToId == post.id && "bg-softSageGreen"}`}

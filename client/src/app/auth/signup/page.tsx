@@ -1,5 +1,6 @@
 "use client";
 
+import SelectUsername from "@/components/modals/SelectUsername";
 // import SelectUsername from "@/components/modals/usernameSelection";
 import customAxios from "@/config/axios";
 import { auth, provider } from "@/config/firebase";
@@ -7,14 +8,17 @@ import { useUserStore } from "@/zustand/userStore";
 import { GoogleLogo } from "@phosphor-icons/react/dist/icons/GoogleLogo";
 import { signInWithPopup, signOut } from "firebase/auth";
 import { useRouter } from "next/navigation";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 
 function SignUp() {
-  // const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const setUser = useUserStore((state) => state.setUser);
   const router = useRouter();
+
+  const refreshUser = useUserStore((state) => state.refreshUser);
+  const user = useUserStore((state) => state.user);
 
   const handleGoogleAuth = async () => {
     const toastId = toast.loading("Loading...");
@@ -30,6 +34,12 @@ function SignUp() {
     try {
       const res = await customAxios.get("/auth/continueWithGoogle", { headers: { ForceTokenRefresh: true } });
 
+      if (res.data == "user-not-yet-created") {
+        toast.success("Successfully signed in", { id: toastId });
+        setIsModalOpen(true);
+        return;
+      }
+
       toast.success("Successfully signed in", { id: toastId });
 
       setUser(res.data.user);
@@ -43,9 +53,20 @@ function SignUp() {
     }
   };
 
+  useEffect(() => {
+    const asyncUseFetch = async () => {
+      if (auth.currentUser) {
+        await refreshUser();
+        const freshUser = useUserStore.getState().user;
+        if (!freshUser) setIsModalOpen(true);
+      }
+    };
+    asyncUseFetch();
+  }, []);
+
   return (
     <div>
-      {/* <SelectUsername isOpen={isModalOpen} /> */}
+      <SelectUsername isOpen={isModalOpen} />
       <div className="flex justify-center font-bold text-2xl mt-40">SignUp</div>
       <div className="flex flex-row justify-center mt-4">
         <div className="flex items-center text-xl font-medium gap-3 rd-block hover:bg-antiqueWhite" onClick={handleGoogleAuth}>

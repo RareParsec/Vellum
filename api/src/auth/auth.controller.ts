@@ -1,6 +1,8 @@
 import {
+  Body,
   Controller,
   Get,
+  Post,
   Req,
   UnauthorizedException,
   UseGuards,
@@ -28,10 +30,10 @@ export class AuthController {
     return await this.authService.signIn(user);
   }
 
-  @Get('createUser')
-  async createUser(@Req() req: Request) {
+  @Post('createUser')
+  async createUser(@Req() req: Request, @Body('username') username: string) {
     const user = req['user'];
 
-    return await this.authService.createUser(user);
+    return await this.authService.createUser(user, username);
   }
 }

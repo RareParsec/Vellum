@@ -1,4 +1,12 @@
 // Comment type already exists in typescript, the 'Type' at the end is required.
+type User = {
+  id: string;
+  username: string;
+  email: string;
+  bio?: string | null;
+  timestamp?: string;
+};
+
 type CommentType = {
   id: string;
   user_id: string;
@@ -7,6 +15,7 @@ type CommentType = {
   content: string;
   comments: CommentType[]; // Nested comments
   timestamp: string;
+  user: User;
 };
 
 type Post = {
@@ -14,15 +23,10 @@ type Post = {
   user_id: string;
   title: string;
   body: string;
-  timestamp: string; // Use string instead of Date on the client (JSON-serialized)
+  timestamp: string;
+  subscribed: boolean;
 
-  user: {
-    id: string;
-    username: string;
-    email?: string;
-    bio?: string | null;
-    timestamp?: string;
-  };
+  user: User;
 
   hashtags: {
     value: string;

@@ -3,6 +3,9 @@ import { Nunito } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "react-hot-toast";
 import AppShell from "@/components/AppShell";
+import SocketInit from "@/components/SocketInit";
+import Progress from "@/components/Progress";
+import AppReady from "@/components/AppReady";
 
 const nunito = Nunito({
   subsets: ["latin"],
@@ -21,11 +24,15 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${nunito.className} antialiased`}>
-        <AppShell>
-          {children}
+        <AppReady>
+          <AppShell>
+            {children}
 
-          <Toaster position="bottom-center" />
-        </AppShell>
+            <Toaster position="bottom-center" />
+            <SocketInit />
+            <Progress />
+          </AppShell>
+        </AppReady>
       </body>
     </html>
   );

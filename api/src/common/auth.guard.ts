@@ -50,8 +50,13 @@ export class AuthGuard implements CanActivate {
       request.user = decodedToken;
     } catch (error) {
       console.error('Error verifying token:', error);
-
       if (optionalAuth) return this.allowIfOptionalAuth(context);
+
+      if (error.code === 'auth/id-token-expired') {
+        throw new UnauthorizedException(
+          'ID token has expired. Please log in again.',
+        );
+      }
 
       throw new UnauthorizedException('Invalid token');
     }

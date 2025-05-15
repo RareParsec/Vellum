@@ -163,6 +163,23 @@ exports.Prisma.HashtagScalarFieldEnum = {
   value: 'value'
 };
 
+exports.Prisma.NotificationScalarFieldEnum = {
+  id: 'id',
+  user_id: 'user_id',
+  post_id: 'post_id',
+  comment_id: 'comment_id',
+  message: 'message',
+  viewed: 'viewed',
+  timestamp: 'timestamp'
+};
+
+exports.Prisma.SubscribedPostScalarFieldEnum = {
+  id: 'id',
+  user_id: 'user_id',
+  post_id: 'post_id',
+  timestamp: 'timestamp'
+};
+
 exports.Prisma.SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -216,6 +233,20 @@ exports.Prisma.HashtagOrderByRelevanceFieldEnum = {
   value: 'value'
 };
 
+exports.Prisma.NotificationOrderByRelevanceFieldEnum = {
+  id: 'id',
+  user_id: 'user_id',
+  post_id: 'post_id',
+  comment_id: 'comment_id',
+  message: 'message'
+};
+
+exports.Prisma.SubscribedPostOrderByRelevanceFieldEnum = {
+  id: 'id',
+  user_id: 'user_id',
+  post_id: 'post_id'
+};
+
 
 exports.Prisma.ModelName = {
   User: 'User',
@@ -224,7 +255,9 @@ exports.Prisma.ModelName = {
   PostVote: 'PostVote',
   CommentVote: 'CommentVote',
   PostView: 'PostView',
-  Hashtag: 'Hashtag'
+  Hashtag: 'Hashtag',
+  Notification: 'Notification',
+  SubscribedPost: 'SubscribedPost'
 };
 
 /**
