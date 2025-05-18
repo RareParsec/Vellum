@@ -1,6 +1,5 @@
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 // Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
 // Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
 
@@ -15,13 +14,11 @@ datasource db {
 }
 
 model User {
-  id       String  @id @default(uuid())
-  username String  @unique @db.VarChar(32)
-  email    String  @unique @db.VarChar(255)
-  bio      String? @db.VarChar(255)
-
-  timestamp DateTime @default(now())
-
+  id             String           @id @default(uuid())
+  username       String           @unique @db.VarChar(32)
+  email          String           @unique @db.VarChar(255)
+  bio            String?          @db.VarChar(255)
+  timestamp      DateTime         @default(now())
   posts          Post[]
   comments       Comment[]
   PostView       PostView[]
@@ -30,15 +27,13 @@ model User {
 }
 
 model Post {
-  id        String   @id @default(uuid())
-  user_id   String   @db.VarChar(255)
-  title     String   @db.VarChar(255)
-  body      String   @db.Text
-  timestamp DateTime @default(now())
-
-  user     User      @relation(fields: [user_id], references: [id])
-  hashtags Hashtag[] @relation("PostToHashTag")
-
+  id             String           @id @default(uuid())
+  user_id        String           @db.VarChar(255)
+  title          String           @db.VarChar(255)
+  body           String           @db.Text
+  timestamp      DateTime         @default(now())
+  user           User             @relation(fields: [user_id], references: [id])
+  hashtags       Hashtag[]        @relation("PostToHashTag")
   comments       Comment[]
   PostView       PostView[]
   Notification   Notification[]
@@ -46,19 +41,17 @@ model Post {
 }
 
 model Comment {
-  id                String   @id @default(uuid())
-  user_id           String   @db.VarChar(255)
+  id                String         @id @default(uuid())
+  user_id           String         @db.VarChar(255)
   post_id           String
   parent_comment_id String?
-  content           String   @db.Text
-  timestamp         DateTime @default(now())
-
-  user          User     @relation(fields: [user_id], references: [id])
-  post          Post     @relation(fields: [post_id], references: [id])
-  parentComment Comment? @relation("CommentToComment", fields: [parent_comment_id], references: [id])
-
-  comments     Comment[]      @relation("CommentToComment")
-  Notification Notification[]
+  content           String         @db.Text
+  timestamp         DateTime       @default(now())
+  user              User           @relation(fields: [user_id], references: [id])
+  post              Post           @relation(fields: [post_id], references: [id], onDelete: Cascade)
+  parentComment     Comment?       @relation("CommentToComment", fields: [parent_comment_id], references: [id])
+  comments          Comment[]      @relation("CommentToComment")
+  Notification      Notification[]
 }
 
 model PostVote {
@@ -82,9 +75,8 @@ model CommentVote {
 model PostView {
   post_id String
   user_id String
-
-  post Post @relation(fields: [post_id], references: [id])
-  user User @relation(fields: [user_id], references: [id])
+  post    Post   @relation(fields: [post_id], references: [id], onDelete: Cascade)
+  user    User   @relation(fields: [user_id], references: [id])
 
   @@id([post_id, user_id])
   @@index([user_id])
@@ -104,10 +96,9 @@ model Notification {
   message    String
   viewed     Boolean  @default(false)
   timestamp  DateTime @default(now())
-
-  user    User     @relation(fields: [user_id], references: [id])
-  post    Post?    @relation(fields: [post_id], references: [id])
-  comment Comment? @relation(fields: [comment_id], references: [id])
+  user       User     @relation(fields: [user_id], references: [id])
+  post       Post?    @relation(fields: [post_id], references: [id], onDelete: Cascade)
+  comment    Comment? @relation(fields: [comment_id], references: [id], onDelete: Cascade)
 }
 
 model SubscribedPost {
@@ -115,9 +106,8 @@ model SubscribedPost {
   user_id   String   @db.VarChar(255)
   post_id   String   @db.VarChar(255)
   timestamp DateTime @default(now())
-
-  user User @relation(fields: [user_id], references: [id])
-  post Post @relation(fields: [post_id], references: [id])
+  user      User     @relation(fields: [user_id], references: [id])
+  post      Post     @relation(fields: [post_id], references: [id], onDelete: Cascade)
 
   @@unique([user_id, post_id])
 }

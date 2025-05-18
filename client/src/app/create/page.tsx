@@ -1,6 +1,6 @@
 "use client";
 import customAxios from "@/config/axios";
-import { auth } from "@/config/firebase";
+import { useUserStore } from "@/zustand/userStore";
 import { TextB, TextItalic, TextStrikethrough } from "@phosphor-icons/react";
 import { useRouter } from "next/navigation";
 import React, { useEffect, useRef, useState } from "react";
@@ -17,18 +17,9 @@ function Create() {
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  const [hashtags, setHashtags] = useState<string[]>([
-    "numberone",
-    "numbertwo",
-    "numberthree",
-    "numberfour",
-    "numberfive",
-    "numbersix",
-    "numberseven",
-    "numbereight",
-    "numbernine",
-    "numberten",
-  ]);
+  const user = useUserStore((state) => state.user);
+
+  const [hashtags, setHashtags] = useState<string[]>([]);
 
   const handleStyling = (style: string) => {
     if (textareaRef.current) {
@@ -70,7 +61,7 @@ function Create() {
       });
 
       toast.success("Post created successfully!", { id: toastId });
-      router.push("/post/" + res.data.id);
+      router.replace("/post/" + res.data.id);
     } catch (error: any) {
       const { response } = error;
       const message = response?.data?.message || "Failed to create post";
@@ -79,8 +70,8 @@ function Create() {
   };
 
   useEffect(() => {
-    if (!auth.currentUser) {
-      router.push("/auth/signin");
+    if (!user) {
+      router.replace("/auth");
     }
   }, []);
 
@@ -125,7 +116,7 @@ function Create() {
           <div className="flex flex-row gap-1 items-center flex-grow">
             <input
               type="text"
-              placeholder="add another..."
+              placeholder="hashtag..."
               className="text-sm outline-none w-full"
               value={hashtagValue}
               onChange={(e) => {
@@ -135,13 +126,17 @@ function Create() {
               }}
               onKeyDown={(e) => {
                 if (e.key === "Enter") {
+                  if (hashtagValue.length < 1) return;
+                  if (hashtags.includes(hashtagValue)) return setHashtagValue("");
                   setHashtags((prev) => [...prev, hashtagValue]);
                   setHashtagValue("");
                 }
               }}
               onBlur={(e) => {
                 const value = e.target.value.replace(/\s/g, "");
+                if (value.length < 1) return;
                 if (value.length > 12) return;
+                if (hashtags.includes(hashtagValue)) return setHashtagValue("");
                 setHashtags((prev) => [...prev, hashtagValue]);
                 setHashtagValue("");
               }}

@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   HttpException,
   Injectable,
   InternalServerErrorException,
@@ -6,81 +7,105 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
+import { DecodedIdToken } from 'firebase-admin/lib/auth/token-verifier';
 import { PrismaService } from 'src/common/prisma.service';
 
 @Injectable()
 export class AuthService {
   constructor(private prisma: PrismaService) {}
 
-  async continueWithGoogle(user, { uid, email } = user) {
+  async continueWithGoogle(user: DecodedIdToken) {
     try {
-      // Check if the user exists
       const foundUser = await this.prisma.user.findFirst({
         where: {
-          id: uid,
+          id: user.uid,
         },
       });
 
       if (foundUser) {
-        return await this.signIn({ uid: user.uid });
+        return await this.signIn(user);
       } else {
         return 'user-not-yet-created';
       }
     } catch (error) {
-      console.error(error);
-      throw new InternalServerErrorException('Error signing in');
+      if (error instanceof HttpException) throw error;
+      throw new InternalServerErrorException('Error signing in with Google...');
     }
   }
 
-  async createUser({ uid, email }, username: string) {
+  async createUser(user: DecodedIdToken, username: string) {
+    if (!username || username.length < 3)
+      throw new BadRequestException(
+        'Username must be at least 3 characters long',
+      );
+
     try {
-      // Check if email exists
+      if (!user.email) {
+        throw new UnauthorizedException('Email not provided');
+      }
+
       const existingEmail = await this.prisma.user.findUnique({
-        where: { email },
+        where: { email: user.email },
       });
       if (existingEmail) {
         throw new UnauthorizedException('Email already exists');
       }
-      // Check if username exists
+
       const existingUsername = await this.prisma.user.findUnique({
-        where: { username: uid },
+        where: { username },
       });
       if (existingUsername) {
         throw new UnauthorizedException('Username already exists');
       }
 
-      // Create the user
-      const user = await this.prisma.user.create({
+      const createdUser = await this.prisma.user.create({
         data: {
-          id: uid,
-          email: email,
+          id: user.uid,
+          email: user.email,
           username: username,
           bio: 'This is a bio',
         },
       });
-      return { user };
+      return { createdUser };
     } catch (error) {
-      if (error instanceof HttpException) return error;
-      console.log(error.message);
-      throw new InternalServerErrorException('Error creating user');
+      if (error instanceof HttpException) throw error;
+      throw new InternalServerErrorException('Error creating user...');
     }
   }
 
-  async signIn({ uid }) {
+  async signIn(user: DecodedIdToken) {
     try {
-      // Find user
-      const user = await this.prisma.user.findUnique({
-        where: { id: uid },
+      const foundUser = await this.prisma.user.findUnique({
+        where: { id: user.uid },
       });
 
-      if (!user) {
-        throw new NotFoundException('User not found');
+      if (!foundUser) {
+        throw new NotFoundException('User not found...');
       }
 
-      return user;
+      return foundUser;
     } catch (error) {
-      console.error(error);
-      throw new InternalServerErrorException('Error signing in');
+      if (error instanceof HttpException) throw error;
+      throw new InternalServerErrorException('Error signing in...');
+    }
+  }
+
+  async getUser(username: string, user: DecodedIdToken) {
+    try {
+      const foundUser = await this.prisma.user.findUnique({
+        where: { username },
+      });
+
+      if (!foundUser) {
+        throw new NotFoundException('User not found...');
+      }
+
+      const { email, ...rest } = foundUser;
+
+      return user.uid === foundUser.id ? foundUser : rest;
+    } catch (error) {
+      if (error instanceof HttpException) throw error;
+      throw new InternalServerErrorException('Error getting user...');
     }
   }
 }

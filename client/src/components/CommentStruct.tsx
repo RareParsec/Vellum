@@ -1,5 +1,5 @@
 "use client";
-import { ArrowBendUpLeft, Certificate, DotsThreeOutline, ListHeart, Share, TrashSimple } from "@phosphor-icons/react";
+import { ArrowBendUpLeft, Certificate, DotsThreeOutline, Share, TrashSimple } from "@phosphor-icons/react";
 import { formatDistanceToNow } from "date-fns";
 import React, { useState } from "react";
 import ReactMarkdown from "react-markdown";
@@ -8,30 +8,49 @@ import remarkGfm from "remark-gfm";
 import toast from "react-hot-toast";
 import customAxios from "@/config/axios";
 import { auth } from "@/config/firebase";
+import AwardModal from "./modals/AwardModal";
+import { useRouter } from "next/navigation";
+import { useUserStore } from "@/zustand/userStore";
 
 function CommentStruct({
   comment,
   allowReply = true,
   isReplyingTo = false,
   setWritingToId,
+  pushUserToRoute = false,
 }: {
   comment: CommentType;
   allowReply?: boolean;
   isReplyingTo?: boolean;
   setWritingToId?: (id: string) => void;
+  pushUserToRoute?: boolean;
 }) {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [awardModalOpen, setAwardModalOpen] = useState(false);
 
-  const handleMenuClick = () => {
+  const user = useUserStore((state) => state.user);
+
+  const router = useRouter();
+
+  const handleMenuClick = (e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
+    e.stopPropagation();
     setMenuOpen(!menuOpen);
   };
 
-  const handleShare = () => {
-    console.log("Share clicked");
+  const handleShare = async (e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
+    e.stopPropagation();
+    const toastId = toast.loading("Sharing comment...");
+    try {
+      await navigator.clipboard.writeText(`http://localhost:5000/post/${comment.post_id}?comment=${comment.id}`);
+      toast.success("Comment link copied to clipboard", { id: toastId });
+    } catch (error) {
+      toast.error("Failed to copy comment link", { id: toastId });
+    }
   };
 
-  const handleAward = () => {
-    console.log("Award clicked");
+  const handleAward = (e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
+    e.stopPropagation();
+    setAwardModalOpen(true);
   };
 
   const handleSubscribe = () => {
@@ -56,10 +75,18 @@ function CommentStruct({
   };
 
   return (
-    <div className="rd-block rounded-bl-none">
+    <div
+      className={`rd-block rounded-bl-none ${pushUserToRoute ? "cursor-pointer" : "cursor-default"}`}
+      onClick={() => pushUserToRoute && router.push(`/post/${comment.post_id}?comment=${comment.id}`)}
+    >
       <div className="flex flex-row justify-between text-sm">
         <div className={`flex flex-row gap-2`}>
-          <div className="font-semibold">{comment.user.username}</div>
+          <div
+            className="font-semibold hover:cursor-pointer hover:underline"
+            onClick={() => router.push(`/profile/${comment.user?.username}`)}
+          >
+            {comment.user?.username}
+          </div>
           <div>{formatDistanceToNow(new Date(comment.timestamp), { addSuffix: true }).replace(/^(about|over|almost)\s/, "")}</div>
         </div>
         <div className="relative flex">
@@ -108,14 +135,20 @@ function CommentStruct({
               className={`rd-block flex flex-row bg-isabelline cursor-pointer gap-2 ${
                 isReplyingTo ? "bg-softSageGreen" : "hover:bg-whisperBlush"
               }`}
-              onClick={handleReply}
+              onClick={() => {
+                if (!user) return router.push("/auth");
+                handleReply();
+              }}
             >
-              <ArrowBendUpLeft size={22} color={isReplyingTo ? "black" : "var(--color-beaver)"} />
+              <div className={`${isReplyingTo ? "text-deepMocha" : "text-deepBeaver"}`}>
+                <ArrowBendUpLeft size={22} />
+              </div>
               <div className="text-sm">reply</div>
             </button>
           )}
         </div>
       </div>
+      <AwardModal isOpen={awardModalOpen} setIsOpen={setAwardModalOpen} />
     </div>
   );
 }

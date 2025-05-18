@@ -29,9 +29,10 @@ export const useUserStore = create(
           } else {
             set({ user: null });
           }
+          return user;
         } catch (error) {
-          console.error("Error refreshing user:", error);
           set({ user: null });
+          return;
         }
       },
     })

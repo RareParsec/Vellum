@@ -5,13 +5,12 @@ import PostStruct from "@/components/PostStruct";
 import WriteBlock from "@/components/WriteBlock";
 import customAxios from "@/config/axios";
 import errorHandler from "@/utils/errorHandler";
-import { useRouteScrollStore } from "@/zustand/routeScrollStore";
-import { useParams, useRouter } from "next/navigation";
+import { useUserStore } from "@/zustand/userStore";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import React, { useEffect, useState } from "react";
-import toast from "react-hot-toast";
 
 function Post() {
-  const { id } = useParams();
+  const params = useParams();
 
   const [post, setPost] = useState<Post | null>(null);
   const [text, setText] = useState<string>("");
@@ -19,14 +18,26 @@ function Post() {
   const [showWritingBlock, setShowWritingBlock] = useState(false);
   const [viewingComment, setViewingComment] = useState<CommentType[]>();
 
-  const triggerScroll = useRouteScrollStore((state) => state.triggerScroll);
-
   const [loading, setLoading] = useState(true);
+
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
+  const user = useUserStore((state) => state.user);
+
+  function findCommentById(comments: CommentType[], id: string): CommentType | null {
+    for (const comment of comments) {
+      if (comment.id === id) return comment;
+      const found = findCommentById(comment.comments, id);
+      if (found) return found;
+    }
+    return null;
+  }
 
   useEffect(() => {
     const fetchPost = async () => {
       try {
-        const res = await customAxios.get(`/post/${id}`);
+        const res = await customAxios.get(`/post/${params.id}`);
 
         setPost(res.data);
       } catch (error: any) {
@@ -36,7 +47,7 @@ function Post() {
       }
     };
     fetchPost();
-  }, [id]);
+  }, [params.id]);
 
   useEffect(() => {
     if (writingToId == null) {
@@ -45,6 +56,28 @@ function Post() {
       setShowWritingBlock(true);
     }
   }, [writingToId]);
+
+  // useEffect(() => {
+  //   if (!viewingComment) return;
+  //   router.push(`/post/${id}?comment=${viewingComment[0].id}`);
+  // }, [viewingComment]);
+
+  useEffect(() => {
+    const commentId = searchParams.get("comment");
+    if (!commentId) {
+      setViewingComment(undefined);
+      return;
+    }
+
+    if (post?.comments) {
+      const comment = findCommentById(post.comments, commentId);
+      if (comment) {
+        setViewingComment([comment]);
+      } else {
+        setViewingComment(undefined);
+      }
+    }
+  }, [searchParams, post]);
 
   const DisplayComments = ({
     comments,
@@ -58,45 +91,42 @@ function Post() {
     recursionCount++;
 
     return (
-      <div className="flex flex-col gap-3">
-        {comments.map((comment) => {
-          return (
-            <div
-              key={comment.id}
-              className={`flex flex-col ${
-                comment.parent_comment_id == null || comment.id == viewingComment?.[0].id ? "mb-8" : "ml-[20px]"
-              }`}
-            >
-              <CommentStruct comment={comment} isReplyingTo={writingToId === comment.id} setWritingToId={setWritingToId} />
-
-              {comment.comments.length !== 0 && (
-                <div className={`pt-5 ${true && "border-l border-rosyBrown"}`}>
-                  {recursionCount > depth ? (
-                    <button className="cursor-pointer">
-                      <div
-                        className="rd-block w-full text-sm font-semibold py-2 ml-[20px]"
-                        onClick={() => {
-                          setViewingComment([comment]);
-                        }}
-                      >
-                        Load more comments...
-                      </div>
-                    </button>
-                  ) : (
-                    <DisplayComments comments={comment.comments} depth={depth++} recursionCount={recursionCount} />
-                  )}
-                </div>
-              )}
-            </div>
-          );
-        })}
+      <div className="flex flex-col">
+        <div className="flex flex-col gap-3">
+          {comments.map((comment) => {
+            return (
+              <div
+                key={comment.id}
+                className={`flex flex-col ${
+                  comment.parent_comment_id == null || comment.id == viewingComment?.[0].id ? "mb-8" : "ml-[15px]"
+                }`}
+              >
+                <CommentStruct comment={comment} isReplyingTo={writingToId === comment.id} setWritingToId={setWritingToId} />
+                {comment.comments.length !== 0 && (
+                  <div className={`pt-5 ${true && "border-l-[4px] border-beaver/40 border-dotted"}`}>
+                    {recursionCount > depth ? (
+                      <button className="cursor-pointer">
+                        <div
+                          className="rd-block w-full text-sm font-semibold py-2 ml-[20px]"
+                          onClick={() => {
+                            router.push(`/post/${params.id}?comment=${comment.id}`);
+                          }}
+                        >
+                          Load more comments...
+                        </div>
+                      </button>
+                    ) : (
+                      <DisplayComments comments={comment.comments} depth={depth++} recursionCount={recursionCount} />
+                    )}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
       </div>
     );
   };
-
-  useEffect(() => {
-    triggerScroll();
-  }, [post]);
 
   if (loading) {
     return (
@@ -122,17 +152,30 @@ function Post() {
     <div className="defined-w min-w-0 flex flex-col gap-4 h-fit items-center">
       <PostStruct post={post} />
       <div
-        className={`w-[90%] rd-block mt-4 py-2 hover:cursor-text ${writingToId == post.id && "bg-softSageGreen"}`}
+        className={`w-[90%] rd-block mt-4 py-2 hover:cursor-text ${writingToId == post.id && "bg-softSageGreen text-black"}`}
         onClick={() => {
+          if (!user) return router.push("/auth");
           setWritingToId(post.id);
         }}
       >
         Write a comment...
       </div>
-      <div className="w-full mt-7">
-        <DisplayComments comments={viewingComment || post.comments} depth={2} />
-      </div>
-      {post.comments.length === 0 && <div className="rd-block w-full text-center text-md pb-22 pt-3">No comments yet</div>}
+      {(viewingComment || post.comments.length > 0) && (
+        <div className="w-full mt-7">
+          <div className="w-full">
+            <div
+              className="text-sm cursor-pointer hover:underline ml-auto w-fit mr-1 mb-1 px-2"
+              onClick={() => {
+                router.push("/post/" + post?.id);
+              }}
+            >
+              {searchParams.get("comment") ? "view all comments" : ""}
+            </div>
+          </div>
+          <DisplayComments comments={viewingComment || post.comments} depth={2} />
+        </div>
+      )}
+      {post.comments.length === 0 && <div className="font-semibold w-full text-center text-md mt-4">No comments yet!</div>}
 
       <div className="absolute top-0 left-0 w-full h-full pointer-events-none">
         <div className="pointer-events-auto">

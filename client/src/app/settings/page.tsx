@@ -10,17 +10,28 @@ function Settings() {
   const router = useRouter();
 
   useEffect(() => {
-    if (!auth.currentUser) {
-      router.push("/auth/signin");
+    if (!user) {
+      router.replace("/auth");
     }
   }, []);
   return (
     <div className="flex flex-col defined-w rd-block">
-      <div className="text-xl font-bold">{user?.username}</div>
-      <div className="mt-2">{user?.email}</div>
-      <div className="text-mutedClayRed font-semibold mt-5">Reset Password</div>
-      <div className="text-mutedClayRed font-bold mt-3" onClick={() => auth.signOut()}>
-        Sign Out
+      <div>
+        <div className="text-2xl font-bold pt-5">{user?.username}</div>
+      </div>
+      <div className="mt-3">{user?.email}</div>
+      <div className="mt-2 text-xs">joined: {user?.timestamp.toString().split("T")[0]}</div>
+
+      <div className="w-full flex flex-row justify-center">
+        <div
+          className="text-mutedClayRed font-bold mt-9 cursor-pointer p-2 px-4 hover:bg-whisperBlush rd-block w-fit"
+          onClick={() => {
+            auth.signOut();
+            router.push("/auth");
+          }}
+        >
+          Log out
+        </div>
       </div>
     </div>
   );

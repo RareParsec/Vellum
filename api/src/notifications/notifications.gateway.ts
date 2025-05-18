@@ -24,9 +24,9 @@ export class NotificationsGateway
   async handleConnection(client: any, ...args: any[]) {
     try {
       const token = client.handshake.auth.token;
-      client.disconnect();
+      if (!token) client.disconnect();
       const decodedToken = await admin.auth().verifyIdToken(token);
-      client.disconnect();
+      if (!decodedToken) client.disconnect();
       client.join(decodedToken.uid);
     } catch (error) {
       client.disconnect();

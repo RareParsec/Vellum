@@ -18,6 +18,88 @@ export class PostService {
     private readonly comment: CommentService,
   ) {}
 
+  private async fetchPosts(
+    user: DecodedIdToken,
+    limit: number | undefined = undefined,
+    cursor: string | null = null,
+    search: string | null = null,
+    hashtags: string[] | [] | null = null,
+    fetchUnseen: boolean = false,
+  ) {
+    try {
+      let seenPostsIds: string[] = [];
+      if (user && fetchUnseen) {
+        const seenPosts = await this.prisma.postView.findMany({
+          where: {
+            user_id: user.uid,
+          },
+          select: {
+            post_id: true,
+          },
+        });
+
+        seenPostsIds = seenPosts.map((post) => post.post_id);
+      }
+
+      const posts = await this.prisma.post.findMany({
+        where:
+          search || (hashtags && hashtags.length > 0)
+            ? {
+                OR: [
+                  // Title contains search term
+                  ...(search ? [{ title: { contains: search } }] : []),
+                  // Body contains search term
+                  ...(search ? [{ body: { contains: search } }] : []),
+                  // Has any of the specified hashtags
+                  ...(hashtags && hashtags.length > 0
+                    ? [
+                        {
+                          hashtags: {
+                            some: {
+                              value: { in: hashtags },
+                            },
+                          },
+                        },
+                      ]
+                    : []),
+                ],
+              }
+            : fetchUnseen
+              ? { id: { notIn: seenPostsIds } }
+              : undefined,
+        include: {
+          user: true,
+          hashtags: true,
+          SubscribedPost: user
+            ? {
+                where: {
+                  user_id: user.uid,
+                },
+              }
+            : undefined,
+          _count: {
+            select: {
+              comments: true,
+            },
+          },
+        },
+        take: limit,
+        skip: cursor ? 1 : 0,
+        cursor: cursor ? { id: cursor } : undefined,
+        orderBy: {
+          timestamp: 'desc',
+        },
+      });
+      return posts;
+    } catch (error) {
+      console.error(error);
+      if (error instanceof HttpException) throw error;
+      throw new InternalServerErrorException(
+        'There was an error getting posts...',
+      );
+    }
+  }
+
   async getPost(pid: string, user?: DecodedIdToken) {
     try {
       const post = await this.prisma.post.findUnique({
@@ -25,6 +107,18 @@ export class PostService {
         include: {
           user: true,
           hashtags: true,
+          SubscribedPost: user
+            ? {
+                where: {
+                  user_id: user.uid,
+                },
+              }
+            : undefined,
+          _count: {
+            select: {
+              comments: true,
+            },
+          },
         },
       });
 
@@ -32,24 +126,12 @@ export class PostService {
         throw new NotFoundException('Post not found');
       }
 
-      const [comments, subscribed] = await Promise.all([
-        this.comment.getComments(pid),
-        (user &&
-          this.prisma.subscribedPost.findFirst({
-            where: {
-              user_id: user.uid,
-              post_id: pid,
-            },
-          })) ||
-          Promise.resolve(false),
-      ]);
+      const comments = await this.comment.getComments(pid);
 
       post['comments'] = comments;
-      post['subscribed'] = subscribed ? true : false;
 
-      console.log(post['comments'], 'comments length');
       if (user) {
-        this.prisma.postView
+        await this.prisma.postView
           .create({
             data: {
               user_id: user?.uid,
@@ -71,215 +153,123 @@ export class PostService {
     }
   }
 
-  async getUserPosts(username: string) {
+  async getPosts(
+    user: DecodedIdToken,
+    limit: number,
+    cursor: string | null = null,
+  ) {
     try {
-      const posts = await this.prisma.post.findMany({
-        where: { user: { username } },
-        include: {
-          user: true,
-          hashtags: true,
-        },
-      });
+      const unseenPosts = user
+        ? await this.fetchPosts(user, limit, cursor, null, null, true)
+        : [];
 
-      const subscribedPosts = await this.prisma.subscribedPost.findMany({
-        where: { user: { username } },
-        include: {
-          post: {
-            include: {
-              user: true,
-              hashtags: true,
-            },
-          },
-        },
-      });
+      if (unseenPosts.length === limit) {
+        if (user) {
+          this.prisma.postView
+            .createMany({
+              data: unseenPosts.map((post) => ({
+                user_id: user.uid,
+                post_id: post.id,
+              })),
+              skipDuplicates: true,
+            })
+            .catch((err) => console.error('Error creating post views:', err));
+        }
 
-      const subscribedPostIds = subscribedPosts.map(
-        (subscribedPost) => subscribedPost.post.id,
-      );
-
-      const postsWithSubscribed = posts.map((post) => ({
-        ...post,
-        subscribed: subscribedPostIds.includes(post.id),
-      }));
-
-      return postsWithSubscribed;
-    } catch (error) {
-      console.error(error);
-      throw new InternalServerErrorException('error getting posts');
-    }
-  }
-
-  async getPostsBySearch(search: string, user) {
-    try {
-      const posts = await this.prisma.post.findMany({
-        where: {
-          OR: [{ title: { contains: search } }, { body: { contains: search } }],
-        },
-        include: {
-          user: true,
-          hashtags: true,
-        },
-      });
-
-      if (!user) return posts;
-
-      const subscribedPosts = await this.prisma.subscribedPost.findMany({
-        where: { user_id: user.uid }, // Replace 'userId' with the actual user ID
-        include: {
-          post: {
-            include: {
-              user: true,
-              hashtags: true,
-            },
-          },
-        },
-      });
-
-      const subscribedPostIds = subscribedPosts.map(
-        (subscribedPost) => subscribedPost.post.id,
-      );
-
-      const postsWithSubscribed = posts.map((post) => ({
-        ...post,
-        subscribed: subscribedPostIds.includes(post.id),
-      }));
-
-      return postsWithSubscribed;
-    } catch (error) {
-      console.error(error);
-      throw new InternalServerErrorException('error getting posts');
-    }
-  }
-
-  async getPosts(user) {
-    try {
-      if (!user) {
-        const postsCount = await this.prisma.post.count();
-        const skipCount = Math.max(
-          0,
-          Math.floor(Math.random() * Math.max(0, postsCount - 10)),
-        );
-
-        const posts = await this.prisma.post.findMany({
-          include: {
-            user: true,
-            hashtags: true,
-          },
-          take: 10,
-          skip: skipCount,
-        });
-        return posts;
+        return unseenPosts;
       }
 
-      const viewedPosts = await this.prisma.postView.findMany({
-        where: { user_id: user.uid },
-        include: {
-          post: {
-            include: {
-              user: true,
-              hashtags: true,
-            },
-          },
-        },
-        orderBy: {},
-      });
+      const remainingLimit = limit - unseenPosts.length;
 
-      const count = await this.prisma.post.count({
-        where: {
-          NOT: { id: { in: viewedPosts.map((post) => post.post.id) } },
-        },
-      });
-      const skipCount = Math.max(
-        0,
-        Math.floor(Math.random() * Math.max(0, count - 10)),
+      const lastUnseenPost =
+        unseenPosts.length > 0
+          ? unseenPosts[unseenPosts.length - 1].id
+          : cursor;
+
+      console.log(lastUnseenPost);
+
+      const additionalPosts = await this.fetchPosts(
+        user,
+        remainingLimit,
+        lastUnseenPost,
+        null,
+        null,
+        false,
       );
 
-      const posts = await this.prisma.post.findMany({
-        where: {
-          NOT: { id: { in: viewedPosts.map((post) => post.post.id) } },
-        },
-        include: {
-          user: true,
-          hashtags: true,
-        },
-        take: 10,
-        skip: skipCount,
-      });
+      const combinedPosts = [...unseenPosts, ...additionalPosts];
 
-      console.log(posts.length, 'posts length');
-
-      let reShowPosts: any[] = [];
-      if (posts.length < 10) {
-        console.log('No posts found, showing previously viewed posts');
-
-        const count = await this.prisma.post.count({
-          where: { id: { in: viewedPosts.map((post) => post.post.id) } },
-        });
-        const skipCount = Math.max(
-          0,
-          Math.floor(Math.random() * Math.max(0, count - 10)),
-        );
-
-        reShowPosts = await this.prisma.post.findMany({
-          where: { id: { in: viewedPosts.map((post) => post.post.id) } },
-          include: {
-            user: true,
-            hashtags: true,
-          },
-          take: 10 - posts.length,
-          skip: skipCount,
-        });
-
-        reShowPosts = [...posts, ...reShowPosts];
-        console.log(
-          reShowPosts.map((post) => post.title),
-          'reshow posts',
-        );
-        console.log(reShowPosts.length, 'reshow posts length');
-      }
-
-      if (!user) return posts || reShowPosts;
-
-      const subscribedPosts = await this.prisma.subscribedPost.findMany({
-        where: { user_id: user.uid }, // Replace 'userId' with the actual user ID
-        include: {
-          post: {
-            include: {
-              user: true,
-              hashtags: true,
-            },
-          },
-        },
-      });
-
-      const subscribedPostIds = subscribedPosts.map(
-        (subscribedPost) => subscribedPost.post.id,
-      );
-
-      const postsWithSubscribed = (
-        (posts.length >= 10 && posts) ||
-        reShowPosts
-      ).map((post) => ({
-        ...post,
-        subscribed: subscribedPostIds.includes(post.id),
-      }));
-
-      if (posts) {
+      if (user) {
         this.prisma.postView
           .createMany({
-            data: posts.map((post) => ({
+            data: combinedPosts.map((post) => ({
               user_id: user.uid,
               post_id: post.id,
             })),
+            skipDuplicates: true,
           })
-          .catch((error) => {
-            console.log(error);
-          });
+          .catch((err) => console.error('Error creating post views:', err));
       }
 
-      return postsWithSubscribed;
+      return combinedPosts;
     } catch (error) {
       console.error(error);
+      if (error instanceof HttpException) throw error;
+      throw new InternalServerErrorException(
+        'There was an error getting posts...',
+      );
+    }
+  }
+
+  async getUserPosts(username: string, user: DecodedIdToken) {
+    try {
+      const posts = await this.prisma.post.findMany({
+        where: {
+          user: {
+            username,
+          },
+        },
+        include: {
+          user: true,
+          hashtags: true,
+          SubscribedPost: user
+            ? {
+                where: {
+                  user_id: user.uid,
+                },
+              }
+            : undefined,
+          _count: {
+            select: {
+              comments: true,
+            },
+          },
+        },
+      });
+
+      return posts;
+    } catch (error) {
+      console.error(error);
+      throw new InternalServerErrorException('error getting posts');
+    }
+  }
+
+  async getPostsBySearch(
+    search: string,
+    hashtags: string[] | [] | null,
+    user: DecodedIdToken,
+  ) {
+    try {
+      const posts = await this.fetchPosts(
+        user,
+        undefined,
+        null,
+        search,
+        hashtags,
+      );
+      return posts;
+    } catch (error) {
+      if (error instanceof HttpException) throw error;
       throw new InternalServerErrorException('error getting posts');
     }
   }
@@ -299,11 +289,10 @@ export class PostService {
           },
         },
       });
-      console.log(post.id);
 
       return post;
     } catch (error) {
-      console.error(error);
+      if (error instanceof HttpException) throw error;
       throw new InternalServerErrorException('error creating post');
     }
   }
@@ -331,10 +320,10 @@ export class PostService {
     }
   }
 
-  async deletePost(id, user) {
+  async deletePost(pid, user: DecodedIdToken) {
     try {
       const post = await this.prisma.post.findUnique({
-        where: { id },
+        where: { id: pid },
         include: { user: true },
       });
 
@@ -343,15 +332,13 @@ export class PostService {
       if (post.user.id !== user.uid)
         throw new ImATeapotException('Unauthorized');
 
-      await this.prisma.post.delete({ where: { id } });
+      await this.prisma.post.delete({ where: { id: pid, user_id: user.uid } });
 
       return { message: 'Post deleted successfully' };
     } catch (error) {
       console.error(error);
-
       if (error instanceof HttpException) throw error;
-
-      throw new InternalServerErrorException('error deleting post');
+      throw new InternalServerErrorException('Error deleting post...');
     }
   }
 
@@ -359,14 +346,15 @@ export class PostService {
     if (!id) throw new BadRequestException('No id provided');
 
     try {
-      const subscribedPosts = await this.prisma.subscribedPost.findMany({
-        where: { user_id: user.uid },
-      });
-
-      const post = await this.prisma.post.findUnique({
-        where: { id },
-        include: { user: true },
-      });
+      const [subscribedPosts, post] = await Promise.all([
+        this.prisma.subscribedPost.count({
+          where: { user_id: user.uid },
+        }),
+        this.prisma.post.findUnique({
+          where: { id },
+          include: { user: true },
+        }),
+      ]);
 
       if (!post) throw new NotFoundException('Post not found');
 
@@ -380,7 +368,7 @@ export class PostService {
         },
       });
 
-      if (!alreadySubscribed && subscribedPosts.length >= 5)
+      if (!alreadySubscribed && subscribedPosts >= 5)
         throw new ImATeapotException('You can only subscribe to 5 posts');
 
       if (alreadySubscribed) {
@@ -389,19 +377,19 @@ export class PostService {
             id: alreadySubscribed.id,
           },
         });
+
+        return [];
       } else {
-        await this.prisma.subscribedPost.create({
+        const subscribedPost = await this.prisma.subscribedPost.create({
           data: {
             user_id: user.uid,
             post_id: id,
           },
         });
+
+        return [subscribedPost];
       }
-
-      return { message: 'Subscribed to post successfully' };
     } catch (error) {
-      // console.error(error);
-
       if (error instanceof HttpException) throw error;
 
       throw new InternalServerErrorException('error subscribing to post');
@@ -410,49 +398,38 @@ export class PostService {
 
   async getSubscribedPosts(username: string, user) {
     try {
-      const usernameSubscribedPosts = await this.prisma.subscribedPost.findMany(
-        {
-          where: {
-            user: { username },
-          },
-          include: {
-            post: {
-              include: {
-                user: true,
-                hashtags: true,
+      const posts = await this.prisma.post.findMany({
+        where: {
+          SubscribedPost: {
+            some: {
+              user: {
+                username,
               },
             },
           },
         },
-      );
-
-      const userSubscribedPosts = await this.prisma.subscribedPost.findMany({
-        where: {
-          user_id: user.uid,
-        },
         include: {
-          post: {
-            include: {
-              user: true,
-              hashtags: true,
+          user: true,
+          hashtags: true,
+          SubscribedPost: user
+            ? {
+                where: {
+                  user_id: user.uid,
+                },
+              }
+            : undefined,
+          _count: {
+            select: {
+              comments: true,
             },
           },
         },
       });
 
-      const subscribedPostIds = userSubscribedPosts.map(
-        (subscribedPost) => subscribedPost.post.id,
-      );
-
-      const postsWithSubscribed = usernameSubscribedPosts.map((post) => ({
-        ...post.post,
-        subscribed: subscribedPostIds.includes(post.post.id),
-      }));
-
-      return postsWithSubscribed;
+      return posts;
     } catch (error) {
-      console.error(error);
-      throw new InternalServerErrorException('error getting subscribed posts');
+      if (error instanceof HttpException) throw error;
+      throw new InternalServerErrorException('Error getting subscribed posts');
     }
   }
 }

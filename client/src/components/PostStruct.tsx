@@ -1,9 +1,9 @@
 "use client";
 
 import customAxios from "@/config/axios";
-import { Certificate, DotsThreeOutline, Pencil, TrashSimple, Share, ListHeart } from "@phosphor-icons/react";
+import { Certificate, DotsThreeOutline, TrashSimple, Share, ListHeart } from "@phosphor-icons/react";
 import { useRouter } from "next/navigation";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import ReactMarkdown from "react-markdown";
 import remarkBreaks from "remark-breaks";
@@ -11,29 +11,69 @@ import remarkGfm from "remark-gfm";
 import { formatDistanceToNow } from "date-fns";
 import { auth } from "@/config/firebase";
 import { useUserStore } from "@/zustand/userStore";
+import { useStoredPostsStore } from "@/zustand/storedPostsStore";
+import errorHandler from "@/utils/errorHandler";
+import AwardModal from "./modals/AwardModal";
 
-function PostStruct({ post, expanded = true }: { post: Post; expanded?: boolean }) {
+function PostStruct({
+  post,
+  setPosts,
+  expanded = true,
+}: {
+  post: Post;
+  setPosts?: React.Dispatch<React.SetStateAction<Post[]>>;
+  expanded?: boolean;
+}) {
   const [menuOpen, setMenuOpen] = useState(false);
-  const [subscribed, setSubscribed] = useState(post.subscribed);
+  const [awardModalOpen, setAwardModalOpen] = useState(false);
+  const [subscribed, setSubscribed] = useState(post.SubscribedPost?.length > 0);
+  const [subscribedOnUI, setSubscribedOnUI] = useState(post.SubscribedPost?.length > 0);
+
+  const changeSubscribed = useStoredPostsStore((state) => state.changeSubscribed);
+  const clearStoredPosts = useStoredPostsStore((state) => state.clearPosts);
 
   const user = useUserStore((state) => state.user);
 
   const router = useRouter();
 
-  const handleShare = () => {};
+  const handleShare = () => {
+    const toastId = toast.loading("Sharing post...");
+    try {
+      navigator.clipboard.writeText(`http://localhost:5000/post/${post.id}`);
+      toast.success("Post link copied to clipboard", { id: toastId });
+    } catch (error) {
+      toast.error("Failed to copy post link", { id: toastId });
+    }
+  };
 
-  const handleAward = () => {};
+  const handleAward = () => {
+    setAwardModalOpen(true);
+  };
 
   const handleSubscribe = async (e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
     e.stopPropagation();
 
-    setSubscribed((prev) => !prev);
-    await customAxios.post(`post/subscribe/${post.id}`).catch((error) => {
-      const { response } = error;
-      const message = response?.data?.message || "Failed to subscribe";
-      toast.error(Array.isArray(message) ? message[0] : message);
-      setSubscribed((prev) => !prev);
-    });
+    setSubscribedOnUI((prev) => !prev);
+    await customAxios
+      .post(`post/subscribe/${post.id}`)
+      .then((res) => {
+        changeSubscribed(post.id, res.data);
+
+        if (!setPosts) return;
+        setPosts((prev) => {
+          return prev.map((p) => {
+            if (p.id === post.id) {
+              return { ...p, SubscribedPost: res.data };
+            }
+            return p;
+          });
+        });
+      })
+      .catch((error) => {
+        console.log(error);
+        setSubscribedOnUI((prev) => !prev);
+        errorHandler(error);
+      });
   };
 
   const deletePost = async () => {
@@ -42,11 +82,41 @@ function PostStruct({ post, expanded = true }: { post: Post; expanded?: boolean 
       await customAxios.delete(`/post/${post.id}`);
 
       toast.success("Post deleted successfully", { id: toastId });
+
+      clearStoredPosts("/");
+      sessionStorage.removeItem("scroll-/");
+      router.push("/");
     } catch (error: any) {
-      const { response } = error;
-      const message = response?.data?.message || "Failed to delete post";
-      toast.error(Array.isArray(message) ? message[0] : message, { id: toastId });
+      errorHandler(error);
     }
+  };
+
+  useEffect(() => {
+    setSubscribed(post.SubscribedPost?.length > 0);
+    setSubscribedOnUI(post.SubscribedPost?.length > 0);
+  }, [post.SubscribedPost]);
+
+  const RenderHashtags = () => {
+    return (
+      <div className="flex flex-row flex-grow flex-wrap gap-x-2 text-[13px]">
+        {post.hashtags.map((hashtag) => {
+          return (
+            <div
+              key={hashtag.value}
+              onClick={(e) => {
+                e.stopPropagation();
+                router.push(`/search?q=&hashtags=${hashtag.value}`);
+              }}
+              className="no-underline text-[#8e7866] hover:text-deepMocha"
+            >
+              <div className="font-semibold hover:cursor-pointer flex flex-row">
+                #<div className="ml-[1px]">{hashtag.value}</div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    );
   };
 
   return (
@@ -60,7 +130,9 @@ function PostStruct({ post, expanded = true }: { post: Post; expanded?: boolean 
     >
       <div className="flex flex-row justify-between text-sm">
         <div className={`flex flex-row ${expanded ? "gap-2" : "flex-grow justify-between"}`}>
-          <div className="font-semibold">{post.user.username}</div>
+          <div className="font-semibold hover:cursor-pointer hover:underline" onClick={() => router.push(`/profile/${post.user.username}`)}>
+            {post.user.username}
+          </div>
           <div>{formatDistanceToNow(new Date(post.timestamp), { addSuffix: true }).replace(/^(about|over|almost)\s/, "")}</div>
         </div>
         {expanded && (
@@ -101,7 +173,9 @@ function PostStruct({ post, expanded = true }: { post: Post; expanded?: boolean 
           <ReactMarkdown remarkPlugins={[remarkGfm, remarkBreaks]}>{post.body}</ReactMarkdown>
         </div>
       </div>
-      <div className={`flex flex-row ${expanded ? "justify-between" : "justify-end"} mt-2`}>
+      {expanded && post.hashtags?.length > 0 && <div className="mt-5">{RenderHashtags()}</div>}
+      <div className={`flex flex-row justify-between mt-4 items-end`}>
+        {!expanded && post.hashtags?.length > 0 ? RenderHashtags() : !expanded && <div></div>}
         {expanded && (
           <div className="flex flex-row gap-2">
             <button className="rd-block flex flex-row bg-isabelline cursor-pointer gap-2 ml-2 hover:bg-whisperBlush" onClick={handleShare}>
@@ -115,13 +189,15 @@ function PostStruct({ post, expanded = true }: { post: Post; expanded?: boolean 
         )}
 
         <button
-          className={`rd-block flex flex-row ${subscribed ? "bg-rose-100" : "bg-isabelline hover:bg-[#fffdfd]"} cursor-pointer gap-2 child`}
+          className={`rd-block h-fit flex flex-row ${
+            subscribedOnUI ? "bg-rose-100" : "bg-isabelline hover:bg-[#fffdfd]"
+          } cursor-pointer gap-2 child`}
           onClick={
             user
               ? handleSubscribe
               : (e) => {
                   e.stopPropagation();
-                  router.push("/auth/signup");
+                  router.push("/auth");
                 }
           }
         >
@@ -129,6 +205,7 @@ function PostStruct({ post, expanded = true }: { post: Post; expanded?: boolean 
           <div className="text-sm">subscribe</div>
         </button>
       </div>
+      <AwardModal isOpen={awardModalOpen} setIsOpen={setAwardModalOpen} />
     </div>
   );
 }

@@ -16,6 +16,7 @@ export const useSocketStore = create(
         const socket = io(process.env.NEXT_PUBLIC_API_URL, { auth: { token }, transports: ["websocket"] });
 
         socket.on("new.notification", (notif) => {
+          console.log("New notification received:", notif);
           useNotificationsStore.getState().addNotification(notif);
         });
 

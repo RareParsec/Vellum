@@ -39,28 +39,37 @@ export class PostController {
     return await this.postService.getPosts(user, limit, cursor);
   }
 
-  @Get(':pid')
+  @Get('user/subscribed/:username')
   @UseGuards(AuthGuard)
   @SetMetadata('OptionalAuth', true)
-  async getPost(@Param('pid') pid: string, @Req() req: Request) {
-    const user: DecodedIdToken = req['user'];
-    return await this.postService.getPost(pid, user);
+  async getSubscribedPosts(
+    @Param('username') username: string,
+    @Req() req: Request,
+  ) {
+    const user = req['user'];
+
+    return await this.postService.getSubscribedPosts(username, user);
   }
 
   @Get('user/:username')
   @UseGuards(AuthGuard)
   @SetMetadata('OptionalAuth', true)
-  async getUserPosts(@Param('username') username: string) {
-    console.log(username);
-    return await this.postService.getUserPosts(username);
+  async getUserPosts(@Param('username') username: string, @Req() req: Request) {
+    const user = req['user'];
+    return await this.postService.getUserPosts(username, user);
   }
 
   @Get('search')
   @UseGuards(AuthGuard)
   @SetMetadata('OptionalAuth', true)
-  async getPostsBySearch(@Req() req: Request, @Query('q') search: string) {
+  async getPostsBySearch(
+    @Req() req: Request,
+    @Query('q') search: string,
+    @Query('hashtags') hashtags: string,
+  ) {
     const user = req['user'];
-    return await this.postService.getPostsBySearch(search, user);
+    const hashtagsArray = hashtags?.split(',').map((tag) => tag.trim());
+    return await this.postService.getPostsBySearch(search, hashtagsArray, user);
   }
 
   @Post('create')
@@ -102,12 +111,12 @@ export class PostController {
     return await this.postService.editPost(body, user);
   }
 
-  @Delete(':id')
+  @Delete(':pid')
   @UseGuards(AuthGuard)
-  async deletePost(@Param('id') id: string, @Req() req: Request) {
+  async deletePost(@Param('pid') pid: string, @Req() req: Request) {
     const user = req['user'];
 
-    return await this.postService.deletePost(id, user);
+    return await this.postService.deletePost(pid, user);
   }
 
   @Post('subscribe/:id')
@@ -118,15 +127,11 @@ export class PostController {
     return await this.postService.subscribePost(id, user);
   }
 
-  @Get('user/subscribed/:username')
+  @Get(':pid')
   @UseGuards(AuthGuard)
   @SetMetadata('OptionalAuth', true)
-  async getSubscribedPosts(
-    @Param('username') username: string,
-    @Req() req: Request,
-  ) {
-    const user = req['user'];
-
-    return await this.postService.getSubscribedPosts(username, user);
+  async getPost(@Param('pid') pid: string, @Req() req: Request) {
+    const user: DecodedIdToken = req['user'];
+    return await this.postService.getPost(pid, user);
   }
 }

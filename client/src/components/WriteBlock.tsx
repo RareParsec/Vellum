@@ -2,7 +2,7 @@ import customAxios from "@/config/axios";
 import React, { useState } from "react";
 import toast from "react-hot-toast";
 import { Rnd } from "react-rnd";
-import { X } from "@phosphor-icons/react";
+import { DotsSix, X } from "@phosphor-icons/react";
 
 function WriteBlock({
   text,
@@ -66,6 +66,8 @@ function WriteBlock({
         content: text,
       });
 
+      console.log(res.data);
+
       toast.success("Comment created successfully", { id: toastId });
       setText("");
       setWritingToId(null);
@@ -105,8 +107,8 @@ function WriteBlock({
       dragHandleClassName="handle"
       bounds={"window"}
     >
-      <div className="w-full h-full flex flex-col rounded-md border border-beaver">
-        <div className="w-full flex flex-row justify-between handle border-b border-gentleBlueGray bg-isabelline rounded-t-md items-center">
+      <div className="w-full h-full flex flex-col rounded-md border-4 border-antiqueWhite">
+        <div className="w-full flex flex-row justify-between handle border-b-2 border-antiqueWhite bg-isabelline rounded-t-md items-center cursor-grab">
           <div className="flex flex-row">
             <div
               className="px-2 py-[4px] flex flex-row items-end hover:cursor-pointer"
@@ -114,14 +116,24 @@ function WriteBlock({
                 setWritingToId(null);
               }}
             >
-              <X color="var(--color-deepMocha)" size={18} />
+              <div className="text-deepBeaver">
+                <X weight="bold" size={18} />
+              </div>
             </div>
             {/* <Link href={"https://www.markdownguide.org/cheat-sheet/"} className="text-[12px] ml-3">
                 learn markdown
               </Link> */}
           </div>
+          <div className="text-beaver/70 flex flex-row cursor-grab mr-auto ml-2 gap">
+            <div className="mr-[-3px]">
+              <DotsSix size={32} />
+            </div>
+            <div className="ml-[-3px]">
+              <DotsSix size={32} />
+            </div>
+          </div>
           <button
-            className="font-semibold px-2 mr-1 py-[4px] cursor-pointer hover:text-deepBeaver"
+            className="font-semibold px-2 mr-1 py-[4px] cursor-pointer text-deepBeaver hover:text-deepMocha"
             onClick={handleReply}
             disabled={loading}
           >

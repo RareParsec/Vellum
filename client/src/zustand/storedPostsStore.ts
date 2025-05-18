@@ -34,6 +34,23 @@ export const useStoredPostsStore = create(
           return { posts: newPosts };
         });
       },
+      changeSubscribed: (postId: string, subscribedPost: any[]) => {
+        set((state) => {
+          const newPosts = new Map(state.posts);
+          newPosts.forEach((posts, route) => {
+            newPosts.set(
+              route,
+              posts.map((post) => {
+                if (post.id === postId) {
+                  return { ...post, SubscribedPost: subscribedPost };
+                }
+                return post;
+              })
+            );
+          });
+          return { posts: newPosts };
+        });
+      },
     })
   )
 );

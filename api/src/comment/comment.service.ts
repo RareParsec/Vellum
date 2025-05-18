@@ -1,4 +1,9 @@
-import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import {
+  BadRequestException,
+  HttpException,
+  Injectable,
+  InternalServerErrorException,
+} from '@nestjs/common';
 import { PrismaService } from 'src/common/prisma.service';
 import { CreateCommentDTO } from './dtos/create-comment.dto';
 import { NotificationsService } from 'src/notifications/notifications.service';
@@ -11,25 +16,9 @@ export class CommentService {
   ) {}
 
   async getComments(postId: string) {
-    const rootComments = await this.prisma.comment.findMany({
-      where: { post_id: postId, parentComment: null },
-      include: {
-        user: {
-          select: {
-            id: true,
-            username: true,
-          },
-        },
-      },
-    });
-
-    const countofcomments = await this.prisma.comment.count({
-      where: { post_id: postId },
-    });
-
-    const addCommentsToComment = async (comment) => {
-      const comments = await this.prisma.comment.findMany({
-        where: { parent_comment_id: comment.id },
+    try {
+      const rootComments = await this.prisma.comment.findMany({
+        where: { post_id: postId, parentComment: null },
         include: {
           user: {
             select: {
@@ -40,24 +29,41 @@ export class CommentService {
         },
       });
 
-      comment.comments = comments;
+      const addCommentsToComment = async (comment) => {
+        const comments = await this.prisma.comment.findMany({
+          where: { parent_comment_id: comment.id },
+          include: {
+            user: {
+              select: {
+                id: true,
+                username: true,
+              },
+            },
+          },
+        });
 
-      await Promise.all(
-        comment.comments.map((childComment) =>
-          addCommentsToComment(childComment),
-        ),
+        comment.comments = comments;
+
+        await Promise.all(
+          comment.comments.map((childComment) =>
+            addCommentsToComment(childComment),
+          ),
+        );
+
+        return comment;
+      };
+
+      const comments = await Promise.all(
+        rootComments.map((childComment) => {
+          return addCommentsToComment(childComment);
+        }),
       );
 
-      return comment;
-    };
-
-    const comments = await Promise.all(
-      rootComments.map((childComment) => {
-        return addCommentsToComment(childComment);
-      }),
-    );
-
-    return comments;
+      return comments;
+    } catch (error) {
+      if (error instanceof HttpException) throw error;
+      throw new InternalServerErrorException('Error getting comments...');
+    }
   }
 
   async getUserComments(username: string) {
@@ -73,19 +79,22 @@ export class CommentService {
 
       return comments;
     } catch (error) {
-      console.error(error);
-      throw new InternalServerErrorException('error getting comments');
+      if (error instanceof HttpException) throw error;
+      throw new InternalServerErrorException('Error getting comments');
     }
   }
 
   async createComment({ type, targetId, content }: CreateCommentDTO, user) {
-    if (type == 'POST') {
-      try {
+    if ((type !== 'POST' && type !== 'COMMENT') || !targetId || !content)
+      throw new BadRequestException('Invalid data provided');
+
+    try {
+      if (type == 'POST') {
         const comment = await this.prisma.comment.create({
           data: {
             content,
-            post: { connect: { id: targetId } },
-            user: { connect: { id: user.uid } },
+            post_id: targetId,
+            user_id: user.uid,
           },
           include: {
             user: true,
@@ -96,56 +105,42 @@ export class CommentService {
         this.prisma.post
           .findUnique({
             where: { id: targetId },
-            select: { user: { select: { id: true } } },
+            include: {
+              user: { select: { id: true } },
+              SubscribedPost: { select: { user_id: true } },
+            },
           })
           .then(async (post) => {
-            if (post) {
-              const commentUser = await this.prisma.user.findUnique({
-                where: { id: user.uid },
-                select: { username: true },
-              });
+            if (!post) return;
+            const usernameOfCommenter = await this.prisma.user.findUnique({
+              where: { id: user.uid },
+              select: { username: true },
+            });
 
-              if (!commentUser) return;
-
-              const allSubscribedUsers =
-                await this.prisma.subscribedPost.findMany({
-                  where: { post_id: targetId },
-                  select: { user_id: true },
-                });
-
-              allSubscribedUsers.forEach((subscribedUser) => {
-                if (
-                  subscribedUser.user_id !== post.user.id &&
-                  subscribedUser.user_id !== user.uid
-                ) {
-                  this.notificationsService.sendNotification({
-                    user_id: subscribedUser.user_id,
-                    post_id: targetId,
-                    comment_id: comment.id,
-                    message: `${commentUser?.username} commented on a post you are subscribed to`,
-                    viewed: false,
-                  });
-                }
-              });
-
+            post.SubscribedPost.forEach((subscribedUser) => {
+              if (subscribedUser.user_id == user.uid) return;
               this.notificationsService.sendNotification({
-                user_id: post.user.id,
+                user_id: subscribedUser.user_id,
                 post_id: targetId,
                 comment_id: comment.id,
-                message: `${commentUser?.username} commented on your post`,
+                message: `${usernameOfCommenter?.username} commented on a post you are subscribed to.`,
                 viewed: false,
               });
-            }
+            });
+
+            this.notificationsService.sendNotification({
+              user_id: post.user.id,
+              post_id: targetId,
+              comment_id: comment.id,
+              message: `${usernameOfCommenter?.username} commented on your post`,
+              viewed: false,
+            });
           });
 
         return comment;
-      } catch (error) {
-        console.error(error);
-        throw new InternalServerErrorException('error creating comment');
       }
-    } else if (type == 'COMMENT') {
-      try {
-        // First, fetch the parent comment to get its post ID
+
+      if (type == 'COMMENT') {
         const parentComment = await this.prisma.comment.findUnique({
           where: { id: targetId },
           select: { post_id: true },
@@ -179,17 +174,16 @@ export class CommentService {
                 user_id: parentComment.user_id,
                 post_id: parentComment.post_id,
                 comment_id: comment.id,
-                message: `${user.username} replied to your comment`,
+                message: `${comment.user.username} replied to your comment`,
                 viewed: false,
               });
             }
           });
-
         return comment;
-      } catch (error) {
-        console.error('Failed to create reply comment:', error);
-        throw new InternalServerErrorException('error creating reply comment');
       }
+    } catch (error) {
+      if (error instanceof HttpException) throw error;
+      throw new InternalServerErrorException('Error creating comment...');
     }
   }
 
@@ -206,9 +200,10 @@ export class CommentService {
         throw new InternalServerErrorException('Unauthorized');
 
       await this.prisma.comment.delete({ where: { id } });
+      return true;
     } catch (error) {
-      console.error(error);
-      throw new InternalServerErrorException('error deleting comment');
+      if (error instanceof HttpException) throw error;
+      throw new InternalServerErrorException('Error deleting comment...');
     }
   }
 }

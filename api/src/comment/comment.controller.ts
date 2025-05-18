@@ -35,7 +35,7 @@ export class CommentController {
     @Body('content', new MdFormatPipe())
     content: string,
   ) {
-    const user = req.user;
+    const user = req['user'];
 
     return await this.commentService.createComment({ ...body, content }, user);
   }

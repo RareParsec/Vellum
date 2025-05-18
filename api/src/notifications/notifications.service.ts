@@ -1,10 +1,12 @@
 import {
   Get,
+  HttpException,
   Injectable,
   InternalServerErrorException,
   Req,
 } from '@nestjs/common';
 import { WebSocketServer } from '@nestjs/websockets';
+import { DecodedIdToken } from 'firebase-admin/lib/auth/token-verifier';
 import { Notification, Prisma } from 'prisma/app/generated/prisma/client';
 import { PrismaService } from 'src/common/prisma.service';
 
@@ -19,7 +21,7 @@ export class NotificationsService {
     this.server = server;
   }
 
-  async getNotifications(user) {
+  async getNotifications(user: DecodedIdToken) {
     try {
       const notifications = await this.prisma.notification.findMany({
         where: { user_id: user.uid },
@@ -29,6 +31,7 @@ export class NotificationsService {
       return notifications;
     } catch (error) {
       console.error(error);
+      if (error instanceof HttpException) throw error;
       throw new InternalServerErrorException('error getting notifications');
     }
   }
@@ -46,7 +49,7 @@ export class NotificationsService {
           .to(notification.user_id)
           .emit('new.notification', createdNotif);
     } catch (error) {
-      console.error('Error creating notification:', error);
+      if (error instanceof HttpException) throw error;
       throw new InternalServerErrorException('error creating notification');
     }
   }
@@ -66,24 +69,24 @@ export class NotificationsService {
     }
   }
 
-  async deleteNotifications(user) {
+  async deleteNotifications(user: DecodedIdToken) {
     try {
       await this.prisma.notification.deleteMany({
         where: { user_id: user.uid },
       });
     } catch (error) {
-      console.error('Error deleting notifications:', error);
+      if (error instanceof HttpException) throw error;
       throw new InternalServerErrorException('error deleting notifications');
     }
   }
 
-  async deleteNotification(user, id) {
+  async deleteNotification(user: DecodedIdToken, id) {
     try {
       await this.prisma.notification.delete({
         where: { id, user_id: user.uid },
       });
     } catch (error) {
-      console.error('Error deleting notification:', error);
+      if (error instanceof HttpException) throw error;
       throw new InternalServerErrorException('error deleting notification');
     }
   }

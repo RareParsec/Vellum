@@ -1,15 +1,21 @@
 import {
   CanActivate,
   ExecutionContext,
+  HttpException,
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import admin from 'src/config/adminSDK';
+import { PrismaService } from './prisma.service';
+import { AuthController } from 'src/auth/auth.controller';
 
 @Injectable()
 export class AuthGuard implements CanActivate {
-  constructor(private reflector: Reflector) {}
+  constructor(
+    private reflector: Reflector,
+    private prisma: PrismaService,
+  ) {}
 
   private allowIfOptionalAuth(context: ExecutionContext) {
     const request = context.switchToHttp().getRequest();
@@ -18,6 +24,7 @@ export class AuthGuard implements CanActivate {
   }
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
+    console.log('AuthGuard activated');
     const optionalAuth =
       this.reflector.get<boolean>('OptionalAuth', context.getHandler()) ||
       false;
@@ -47,10 +54,23 @@ export class AuthGuard implements CanActivate {
         throw new UnauthorizedException('Email not verified');
       }
 
+      const dbUser = await this.prisma.user.findUnique({
+        where: { id: decodedToken.uid },
+      });
+
+      if (!dbUser) {
+        if (optionalAuth) return this.allowIfOptionalAuth(context);
+
+        if (context.getClass() !== AuthController) {
+          throw new UnauthorizedException('Registeration incomplete');
+        }
+      }
+
       request.user = decodedToken;
     } catch (error) {
-      console.error('Error verifying token:', error);
       if (optionalAuth) return this.allowIfOptionalAuth(context);
+
+      if (error instanceof HttpException) throw error;
 
       if (error.code === 'auth/id-token-expired') {
         throw new UnauthorizedException(

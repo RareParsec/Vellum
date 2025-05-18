@@ -2,8 +2,10 @@ import {
   Body,
   Controller,
   Get,
+  Param,
   Post,
   Req,
+  SetMetadata,
   UnauthorizedException,
   UseGuards,
 } from '@nestjs/common';
@@ -35,5 +37,13 @@ export class AuthController {
     const user = req['user'];
 
     return await this.authService.createUser(user, username);
+  }
+
+  @Get('user/:username')
+  @SetMetadata('OptionalAuth', true)
+  async getUser(@Req() req: Request, @Param('username') username: string) {
+    const user = req['user'];
+
+    return await this.authService.getUser(username, user);
   }
 }

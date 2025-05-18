@@ -6,6 +6,7 @@ import { useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import toast from "react-hot-toast";
 import { useStoredPostsStore } from "@/zustand/storedPostsStore";
+import { globalScrollRef } from "./AppShell";
 
 function Search() {
   const [searchValue, setSearchValue] = useState("");
@@ -13,13 +14,9 @@ function Search() {
 
   const pathname = usePathname();
   const searchParams = useSearchParams();
-
   const router = useRouter();
 
-  const showBackButtonRoutes = ["/post"];
-
   const clearStoredPosts = useStoredPostsStore((state) => state.clearPosts);
-
   const searchRef = useRef<HTMLInputElement>(null);
 
   const handleSearch = (e: React.FormEvent<HTMLFormElement>) => {
@@ -28,7 +25,7 @@ function Search() {
     if (searchValue === "") {
       searchRef.current?.blur();
       setOpen(false);
-      return router.replace("/");
+      return router.push("/");
     }
 
     if (searchValue.length < 3) {
@@ -36,17 +33,37 @@ function Search() {
       return;
     }
 
+    const words = searchValue.split(" ");
+
+    const hashtags = words.filter((word) => word.startsWith("#")).map((word) => word.slice(1));
+    const filteredWords = words.filter((word) => !word.startsWith("#"));
+
     searchRef.current?.blur();
-    setOpen(false);
 
     if (pathname.includes("/search")) {
       clearStoredPosts(pathname);
     }
-    router.replace(`/search?q=${searchValue}`);
+    router.push(`/search?q=${filteredWords.join(" ")}${hashtags?.length > 0 ? `&hashtags=${hashtags.join(",")}` : ""}`);
+    setOpen(false);
   };
 
   useEffect(() => {
-    setSearchValue(searchParams.get("q") || "");
+    setSearchValue(
+      `${
+        (searchParams.get("hashtags") &&
+          searchParams
+            .get("hashtags")
+            ?.split(",")
+            .map((hashtag) => {
+              return `#${hashtag}`;
+            })
+            .join(" ")) ||
+        ""
+      } ${searchParams.get("q") || ""}`.trim()
+    );
+    globalScrollRef.current?.scrollTo({
+      top: 0,
+    });
   }, [searchParams]);
 
   return (
@@ -65,7 +82,7 @@ function Search() {
           />
         )}
       </AnimatePresence>
-      <div className="flex flex-col my-1 mt-3 top-1 rd-block border-2 border-isabelline sticky z-30 w-full">
+      <div className="flex flex-col my-1 mt-3 top-1 rd-block border-2 border-isabelline sticky z-30 w-full h-fit">
         <div
           className="flex flex-row items-center h-fit text-center gap-1 cursor-pointer hover:cursor-text"
           onClick={() => {
@@ -87,17 +104,27 @@ function Search() {
 
         {pathname !== "/" && (
           // showBackButtonRoutes.map((route) => pathname.includes(route)).includes(true)
-          <div
-            className="absolute right-full hover:cursor-pointer top-0 rd-block py-3 border-isabelline border-x-8"
-            onClick={() => {
-              router.back();
-            }}
-          >
-            <div className="flex flex-row font-bold items-center text-[14px]">
-              <CaretLeft size={18} weight="bold" color="var(--color-deepMocha)" />
-              Back
+          <>
+            <div
+              className="absolute hover:cursor-pointer hover:bg-antiqueWhite top-0 rd-block right-full h-full flex flex-row items-center mr-2 border-isabelline"
+              onClick={() => {
+                router.back();
+              }}
+            >
+              <div className="flex rounded-[50px] flex-row font-bold items-center text-[14px]">
+                <CaretLeft size={18} weight="bold" color="var(--color-deepMocha)" />
+                Back
+              </div>
             </div>
-          </div>
+            {/* <div
+              className="absolute hover:cursor-pointer hover:bg-antiqueWhite top-full rd-block right-full h-full flex flex-row items-center mr-2 mt-2 border-isabelline"
+              onClick={() => {
+                router.replace("/");
+              }}
+            >
+              <div className="flex rounded-[50px] flex-row font-bold items-center text-[14px] px-2">/</div>
+            </div> */}
+          </>
         )}
       </div>
     </>
