@@ -2,6 +2,7 @@
   "name": "client",
   "version": "0.1.0",
   "private": true,
+  "homepage": "https://vellumi.me",
   "scripts": {
     "dev": "next dev -p 5000",
     "build": "next build",
@@ -42,6 +43,7 @@
     "eslint": "^9",
     "eslint-config-next": "15.2.4",
     "eslint-plugin-unused-imports": "^4.1.4",
+    "gh-pages": "^6.3.0",
     "tailwindcss": "^4",
     "typescript": "^5"
   }

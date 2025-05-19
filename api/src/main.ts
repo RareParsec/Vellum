@@ -6,7 +6,7 @@ async function bootstrap() {
 
   app.enableCors({
     origin:
-      process.env.NODE_ENV === 'production' ? 'https://www.domain.com' : true,
+      process.env.NODE_ENV === 'production' ? 'https://www.vellumi.com' : true,
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
   });
 
