@@ -41,7 +41,7 @@ function CommentStruct({
     e.stopPropagation();
     const toastId = toast.loading("Sharing comment...");
     try {
-      await navigator.clipboard.writeText(`http://localhost:5000/post/${comment.post_id}?comment=${comment.id}`);
+      await navigator.clipboard.writeText(`${process.env.NEXT_PUBLIC_API_URL}/post/${comment.post_id}?comment=${comment.id}`);
       toast.success("Comment link copied to clipboard", { id: toastId });
     } catch (error) {
       toast.error("Failed to copy comment link", { id: toastId });

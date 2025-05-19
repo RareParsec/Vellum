@@ -39,7 +39,7 @@ function PostStruct({
   const handleShare = () => {
     const toastId = toast.loading("Sharing post...");
     try {
-      navigator.clipboard.writeText(`http://localhost:5000/post/${post.id}`);
+      navigator.clipboard.writeText(`${process.env.NEXT_PUBLIC_API_URL}/post/${post.id}`);
       toast.success("Post link copied to clipboard", { id: toastId });
     } catch (error) {
       toast.error("Failed to copy post link", { id: toastId });
