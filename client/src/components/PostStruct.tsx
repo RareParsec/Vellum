@@ -140,7 +140,9 @@ function PostStruct({
             <button
               className={`${
                 post.user_id !== auth.currentUser?.uid && "hidden"
-              } rd-block py-0 hover:bg-whisperBlush cursor-pointer rounded-sm ${menuOpen && "rounded-b-none bg-isabelline"}`}
+              } rd-block py-0 hover:bg-rosey cursor-pointer rounded-sm shadow-sm bg-linen hover:bg-toastedLinen ${
+                menuOpen && "rounded-b-none bg-linen active-tap"
+              }`}
               onClick={() => {
                 setMenuOpen(!menuOpen);
               }}
@@ -149,15 +151,15 @@ function PostStruct({
             </button>
 
             {menuOpen && (
-              <div className="absolute flex flex-col top-full left-0 rd-block bg-isabelline p-0 w-30 rounded-tl-none overflow-hidden border border-linen border-l-0 border-r-2 border-b-2">
+              <div className="absolute flex flex-col top-full left-0 rd-block bg-linen p-0 w-30 rounded-tl-none overflow-hidden border border-isabelline border-l-0 border-r-2 border-b-2">
                 {/* <button>
-                  <div className="flex flex-row flex-grow p-2 py-[7px] gap-2 pt-[8px] hover:bg-whisperBlush cursor-pointer items-center">
+                  <div className="flex flex-row flex-grow p-2 py-[7px] gap-2 pt-[8px] hover:bg-toastedLinen cursor-pointer items-center">
                     <Pencil size={22} color="var(--color-beaver)" />
                     <div className="text-sm">edit</div>
                   </div>
                 </button> */}
                 <button onClick={deletePost}>
-                  <div className="flex flex-row flex-grow p-2 py-[7px] gap-2 hover:bg-whisperBlush cursor-pointer items-center">
+                  <div className="flex flex-row flex-grow p-2 py-[7px] active-tap gap-2 hover:bg-toastedLinen cursor-pointer items-center">
                     <TrashSimple size={22} color="var(--color-beaver)" />
                     <div className="text-sm">delete</div>
                   </div>
@@ -173,25 +175,32 @@ function PostStruct({
           <ReactMarkdown remarkPlugins={[remarkGfm, remarkBreaks]}>{post.body}</ReactMarkdown>
         </div>
       </div>
-      {expanded && post.hashtags?.length > 0 && <div className="mt-5">{RenderHashtags()}</div>}
+      {post.hashtags?.length > 0 && <div className="mt-5">{RenderHashtags()}</div>}
       <div className={`flex flex-row justify-between mt-4 items-end`}>
-        {!expanded && post.hashtags?.length > 0 ? RenderHashtags() : !expanded && <div></div>}
+        {/* {!expanded && post.hashtags?.length > 0 ? RenderHashtags() : !expanded && <div></div>} */}
         {expanded && (
           <div className="flex flex-row gap-2">
-            <button className="rd-block flex flex-row bg-isabelline cursor-pointer gap-2 ml-2 hover:bg-whisperBlush" onClick={handleShare}>
+            <button
+              className="rd-block flex flex-row bg-linen cursor-pointer gap-2 ml-2 hover:bg-toastedLinen shadow-sm active-tap"
+              onClick={handleShare}
+            >
               <Share size={22} color="var(--color-beaver)" />
             </button>
-            <button className="rd-block flex flex-row bg-isabelline cursor-pointer gap-2 hover:bg-whisperBlush" onClick={handleAward}>
+            <button
+              className="rd-block flex flex-row bg-linen cursor-pointer gap-2 hover:bg-toastedLinen shadow-sm active-tap"
+              onClick={handleAward}
+            >
               <Certificate size={22} color="var(--color-beaver)" />
               <div className="text-sm">award</div>
             </button>
           </div>
         )}
 
+        <div />
         <button
           className={`rd-block h-fit flex flex-row ${
-            subscribedOnUI ? "bg-rose-100" : "bg-isabelline hover:bg-[#fffdfd]"
-          } cursor-pointer gap-2 child`}
+            !subscribedOnUI && "bg-linen hover:!bg-rosy/40"
+          } cursor-pointer gap-2 not-sm:child shadow-sm ${subscribedOnUI && "!bg-rosy"} active-tap`}
           onClick={
             user
               ? handleSubscribe

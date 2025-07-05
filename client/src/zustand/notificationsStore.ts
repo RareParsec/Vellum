@@ -1,27 +1,17 @@
 import { create } from "zustand";
 import { combine } from "zustand/middleware";
 
-export type Notification = {
-  id: string;
-  user_id: string;
-  post_id?: string;
-  comment_id?: string;
-  message: string;
-  viewed: boolean;
-  timestamp: Date;
-};
-
 export const useNotificationsStore = create(
   combine(
     {
-      notifications: [] as Notification[],
+      notifications: [] as NotificationType[],
     },
 
     (set, get) => ({
-      setNotifications: (notifications: Notification[]) => {
+      setNotifications: (notifications: NotificationType[]) => {
         set({ notifications });
       },
-      addNotification: (notification: Notification) => {
+      addNotification: (notification: NotificationType) => {
         set((state) => ({
           notifications: [notification, ...state.notifications],
         }));

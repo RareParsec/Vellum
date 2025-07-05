@@ -35,17 +35,20 @@ function AwardModal({ isOpen, setIsOpen }: { isOpen: boolean; setIsOpen: React.D
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.2 }}
-          onClick={handleClose}
+          onClick={(e) => {
+            e.stopPropagation();
+            handleClose();
+          }}
         >
           <motion.div
-            className="rd-block bg-isabelline text-center flex flex-col gap-4 p-6 w-[90%] max-w-[400px] relative"
+            className="rd-block bg-linen text-center flex flex-col gap-4 p-6 w-[90%] max-w-[400px] relative"
             initial={{ scale: 0.9, y: 20 }}
             animate={{ scale: 1, y: 0 }}
             exit={{ scale: 0.9, y: 20 }}
             transition={{ type: "spring", damping: 25, stiffness: 300 }}
             onClick={(e) => e.stopPropagation()}
           >
-            <button className="absolute top-3 right-3 rd-block py-1 px-1 hover:bg-whisperBlush cursor-pointer" onClick={handleClose}>
+            <button className="absolute top-3 right-3 rd-block py-1 px-1 hover:bg-toastedLinen cursor-pointer" onClick={handleClose}>
               <X size={22} color="var(--color-beaver)" />
             </button>
 
@@ -72,7 +75,7 @@ function AwardModal({ isOpen, setIsOpen }: { isOpen: boolean; setIsOpen: React.D
             </motion.p>
 
             <motion.button
-              className="rd-block bg-whisperBlush hover:bg-antiqueWhite cursor-pointer py-2 mt-2"
+              className="rd-block bg-toastedLinen hover:bg-antiqueWhite cursor-pointer py-2 mt-2"
               onClick={handleClose}
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}

@@ -8,7 +8,6 @@ import { notFound, useParams, usePathname, useRouter, useSearchParams } from "ne
 import customAxios from "@/config/axios";
 import toast from "react-hot-toast";
 import errorHandler from "@/utils/errorHandler";
-import { globalScrollRef } from "@/components/AppShell";
 
 enum Tabs {
   Posts = "post",
@@ -144,7 +143,7 @@ function Profile() {
   useEffect(() => {
     fetchUserInfo();
 
-    globalScrollRef.current?.scrollTo({
+    window.scrollTo({
       top: sessionStorage.getItem("scroll-" + pathname) ? parseInt(sessionStorage.getItem("scroll-" + pathname)!) : undefined,
     });
   }, []);
@@ -193,7 +192,7 @@ function Profile() {
               {active === tab && (
                 <motion.div
                   layoutId="profileTabs"
-                  className="absolute inset-0 bg-isabelline rounded-lg z-0"
+                  className="absolute inset-0 bg-antiqueWhite rounded-lg z-0"
                   transition={{ duration: 0.2 }}
                 />
               )}

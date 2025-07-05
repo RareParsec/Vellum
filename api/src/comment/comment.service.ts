@@ -112,10 +112,12 @@ export class CommentService {
           })
           .then(async (post) => {
             if (!post) return;
-            const usernameOfCommenter = await this.prisma.user.findUnique({
+            const commenter = await this.prisma.user.findUnique({
               where: { id: user.uid },
-              select: { username: true },
+              select: { username: true, id: true },
             });
+
+            if (!commenter) return;
 
             post.SubscribedPost.forEach((subscribedUser) => {
               if (subscribedUser.user_id == user.uid) return;
@@ -123,16 +125,20 @@ export class CommentService {
                 user_id: subscribedUser.user_id,
                 post_id: targetId,
                 comment_id: comment.id,
-                message: `${usernameOfCommenter?.username} commented on a post you are subscribed to.`,
+                message: `${commenter?.username} commented on a post you are subscribed to.`,
+                preview: comment.content,
                 viewed: false,
               });
             });
+
+            if (commenter.id == post.user.id) return;
 
             this.notificationsService.sendNotification({
               user_id: post.user.id,
               post_id: targetId,
               comment_id: comment.id,
-              message: `${usernameOfCommenter?.username} commented on your post`,
+              message: `${commenter?.username} commented on your post`,
+              preview: comment.content,
               viewed: false,
             });
           });
@@ -175,6 +181,7 @@ export class CommentService {
                 post_id: parentComment.post_id,
                 comment_id: comment.id,
                 message: `${comment.user.username} replied to your comment`,
+                preview: comment.content,
                 viewed: false,
               });
             }

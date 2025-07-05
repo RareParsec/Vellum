@@ -1,5 +1,6 @@
 @import "tailwindcss";
 
+/* ======================= Root Variables ======================= */
 :root {
   --background: #ffffff;
   --foreground: #171717;
@@ -14,21 +15,31 @@
   --color-isabelline: #f8f5f2;
   --color-whisperBlush: #f2dfdb;
   --color-linen: #f4ede3;
-  --color-toastedLinen: #f1e8da;
+  --color-toastedLinen: #fff8e6; /*FFF8E6 or F5F0E6*/
   --color-antiqueWhite: #f0e4d1;
   --color-dun: #cabaa7;
   --color-beaver: #a18d7a;
   --color-deepBeaver: #7a6856;
   --color-rosyBrown: #c39994;
   --color-rosyBrownDark: #bd8f89;
-
+  --color-rosy: #ffe4e6;
   --color-softSageGreen: #c4d3ae;
   --color-mutedClayRed: #d46a6a;
   --color-gentleBlueGray: #c3c7c5;
-
   --color-deepMocha: #5e5246;
+
+  --breakpoint-*: initial;
 }
 
+/* ======================= Breakpoints ======================= */
+@custom-variant 2xl (@media (max-width: 1535px));
+@custom-variant xl (@media (max-width: 1279px));
+@custom-variant lg (@media (max-width: 1023px));
+@custom-variant md (@media (max-width: 767px));
+@custom-variant sm (@media (max-width: 639px));
+@custom-variant not-sm (@media (min-width: 640px));
+
+/* ======================= Dark Mode ======================= */
 @media (prefers-color-scheme: dark) {
   :root {
     --background: #0a0a0a;
@@ -36,22 +47,39 @@
   }
 }
 
+/* ======================= Global HTML/Body ======================= */
+html,
 body {
-  background: var(--color-isabelline);
+  /* height: 100%; */
+  /* overflow: hidden; */
+  margin: 0;
+  padding: 0;
+  scrollbar-width: none;
+}
+
+body {
+  background: var(--color-linen);
   color: var(--color-deepMocha);
+  -ms-overflow-style: none;
+
   /* font-family: Arial, Helvetica, sans-serif; */
 }
 
+/* ======================= Scrollbar ======================= */
+::-webkit-scrollbar {
+  display: none;
+}
+
+::-webkit-scrollbar-button {
+  display: none;
+}
+
+/* ======================= Selection ======================= */
 *::selection {
-  background-color: var(--color-gray-300) /* oklch(0.872 0.01 258.338) = #d1d5dc */;
+  background-color: var(--color-gray-300); /* oklch(0.872 0.01 258.338) = #d1d5dc */
 }
 
-@utility rd-block {
-  background-color: var(--color-linen);
-  border-radius: 12px;
-  padding: 8px 15px 8px 15px;
-}
-
+/* ======================= Utility Layer ======================= */
 @layer utilities {
   .no-scrollbar::-webkit-scrollbar {
     display: none;
@@ -62,10 +90,24 @@ body {
   }
   .defined-w {
     width: 75vw;
-    max-width: 700px;
+    max-width: 800px;
+  }
+  .defined-w {
+    @apply w-[75vw] sm:w-[98vw] max-w-[800px];
+  }
+  .active-tap {
+    @apply transition-transform duration-100 ease-in-out active:scale-95;
   }
 }
 
+/* ======================= Components Layer ======================= */
+@layer components {
+  .rd-block {
+    @apply bg-isabelline rounded-[12px] px-[15px] py-[8px] shadow-[5px_5px_25px_rgba(0,0,0,0.1)];
+  }
+}
+
+/* ======================= Base Layer ======================= */
 /* In your global CSS file */
 @layer base {
   h1 {
@@ -78,7 +120,7 @@ body {
     @apply text-[16px] font-bold my-1;
   }
   code {
-    @apply border border-beaver rounded-md px-2 bg-whisperBlush py-[1px];
+    @apply border border-beaver rounded-md px-2 bg-rosy py-[1px];
   }
   a {
     @apply text-beaver underline hover:text-deepBeaver;
@@ -90,6 +132,8 @@ body {
     @apply list-decimal list-inside;
   }
 }
+
+/* ======================= Markdown Syntax Sample ======================= */
 /* **Hello World**
 *Hello World*
 ~~Hello World~~
@@ -98,9 +142,7 @@ body {
 ### Hello World
 > Hello World
 `Hello World`
-```
-Hello World
-```
+
 [Hello World](https://example.com)
 - Hello World
 1. Hello World
@@ -111,11 +153,24 @@ Hello World[^1]
 | ----- | ----- |
 | Hello | World | */
 
-.parent:hover:has(.child:hover) {
-  background-color: var(--color-linen); /* blue-200 (original color) */
+/* ======================= Hover Effect ======================= */
+@media (min-width: 640px) {
+  .parent:hover:has(.child:hover),
+  .parent:hover:has([class*="child"]:hover) {
+    background-color: var(--color-isabelline) !important;
+  }
+
+  .parent:hover .child,
+  .parent:hover [class*="child"] {
+    background-color: #f8f8f8 !important;
+    box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+  }
+}
+textarea {
+  field-sizing: content;
 }
 
-/* nprogress overrides */
+/* ======================= NProgress Overrides ======================= */
 #nprogress {
   pointer-events: none;
 }
@@ -139,4 +194,16 @@ Hello World[^1]
   box-shadow: 0 0 10px #facc15, 0 0 5px #facc15;
   opacity: 1;
   transform: rotate(3deg) translate(0px, -4px);
+}
+
+/* ======================= Commented Out Utility Block ======================= */
+/* @utility rd-block {
+  background-color: var(--color-isabelline);
+  border-radius: 12px;
+  padding: 8px 15px 8px 15px;
+  box-shadow: 5px 5px 25px rgba(0, 0, 0, 0.1);
+} */
+
+button {
+  @apply transform transition-transform transform-gpu duration-100 ease-in-out active:scale-95;
 }

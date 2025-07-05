@@ -59,7 +59,7 @@ function SelectUsername({ isOpen }: { isOpen: boolean }) {
           transition={{ duration: 0.2 }}
         >
           <motion.div
-            className="rd-block bg-isabelline text-center flex flex-col gap-4 p-6 w-[90%] max-w-[500px] relative"
+            className="rd-block bg-linen text-center flex flex-col gap-4 p-6 w-[90%] max-w-[500px] relative"
             initial={{ scale: 0.9, y: 20 }}
             animate={{ scale: 1, y: 0 }}
             exit={{ scale: 0.9, y: 20 }}

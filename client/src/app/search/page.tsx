@@ -1,5 +1,4 @@
 "use client";
-import { globalScrollRef } from "@/components/AppShell";
 import PostStruct from "@/components/PostStruct";
 import customAxios from "@/config/axios";
 import errorHandler from "@/utils/errorHandler";
@@ -57,7 +56,7 @@ function SearchClient() {
   useEffect(() => {
     if (!posts || posts.length === 0) return;
     console.log(posts.length, sessionStorage.getItem("scroll-" + pathname));
-    globalScrollRef.current?.scrollTo({
+    window.scrollTo({
       top: sessionStorage.getItem("scroll-" + pathname) ? parseInt(sessionStorage.getItem("scroll-" + pathname) || "0") : undefined,
     });
   }, []);
@@ -71,12 +70,12 @@ function SearchClient() {
             return (
               <div className="flex flex-col" key={index}>
                 <div className="flex flex-row justify-between">
-                  <Skeleton width={120} baseColor="var(--color-linen)" />
-                  <Skeleton width={120} baseColor="var(--color-linen)" />
+                  <Skeleton width={120} baseColor="var(--color-isabelline)" />
+                  <Skeleton width={120} baseColor="var(--color-isabelline)" />
                 </div>
-                <Skeleton count={2} height={90} baseColor="var(--color-linen)" className="mt-3" />
+                <Skeleton count={2} height={90} baseColor="var(--color-isabelline)" className="mt-3" />
                 <div className="flex flex-row justify-end">
-                  <Skeleton height={30} width={140} baseColor="var(--color-linen)" className="mt-2" />
+                  <Skeleton height={30} width={140} baseColor="var(--color-isabelline)" className="mt-2" />
                 </div>
               </div>
             );
@@ -95,6 +94,7 @@ function SearchClient() {
           </div>
         );
       })}
+      <div className="w-full flex flex-row justify-center mt-2">End of posts...</div>
     </div>
   );
 }

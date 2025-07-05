@@ -6,7 +6,6 @@ import { useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import toast from "react-hot-toast";
 import { useStoredPostsStore } from "@/zustand/storedPostsStore";
-import { globalScrollRef } from "./AppShell";
 
 function Search() {
   const [searchValue, setSearchValue] = useState("");
@@ -61,7 +60,7 @@ function Search() {
         ""
       } ${searchParams.get("q") || ""}`.trim()
     );
-    globalScrollRef.current?.scrollTo({
+    window.scrollTo({
       top: 0,
     });
   }, [searchParams]);
@@ -75,16 +74,33 @@ function Search() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.05 }}
-            className="absolute top-0 left-0 h-full w-full backdrop-blur-[5px] z-20"
+            className="absolute top-0 left-0 h-full w-full backdrop-blur-[5px] z-20 sm:hidden"
             onClick={() => {
               setOpen(false);
             }}
           />
         )}
       </AnimatePresence>
-      <div className="flex flex-col my-1 mt-3 top-1 rd-block border-2 border-isabelline sticky z-30 w-full h-fit">
+      <div className="flex flex-row z-30 w-full h-full">
+        {pathname !== "/" && (
+          <>
+            <div
+              className="absolute sm:static hover:cursor-pointer hover:bg-toastedLinen top-0 rd-block right-full h-full flex flex-row items-center mr-2 border-linen sm:bg-transparent sm:border-none sm:shadow-none sm:mr-0 font-bold sm:font-medium"
+              onClick={() => {
+                router.back();
+              }}
+            >
+              <div className="flex rounded-[50px] flex-row items-center text-[14px]">
+                <CaretLeft size={18} weight="bold" color="var(--color-deepMocha)" />
+                <div className="sm:hidden">Back</div>
+              </div>
+            </div>
+          </>
+        )}
         <div
-          className="flex flex-row items-center h-fit text-center gap-1 cursor-pointer hover:cursor-text"
+          className={`flex flex-row items-center h-fit text-center gap-1 cursor-pointer hover:cursor-text py-2 pr-2 rounded-md pl-2 sm:pl-0 ${
+            pathname === "/" && "pl-2 sm:pl-4"
+          }`}
           onClick={() => {
             setOpen(true);
             searchRef.current?.focus();
@@ -97,35 +113,10 @@ function Search() {
               value={searchValue}
               onChange={(e) => setSearchValue(e.target.value)}
               placeholder="Search"
-              className="py-1 text-[13px] px-2 border-none focus:ring-0 outline-none w-full"
+              className="py-1 text-[16px] px-2 border-none focus:ring-0 outline-none w-full"
             />
           </form>
         </div>
-
-        {pathname !== "/" && (
-          // showBackButtonRoutes.map((route) => pathname.includes(route)).includes(true)
-          <>
-            <div
-              className="absolute hover:cursor-pointer hover:bg-antiqueWhite top-0 rd-block right-full h-full flex flex-row items-center mr-2 border-isabelline"
-              onClick={() => {
-                router.back();
-              }}
-            >
-              <div className="flex rounded-[50px] flex-row font-bold items-center text-[14px]">
-                <CaretLeft size={18} weight="bold" color="var(--color-deepMocha)" />
-                Back
-              </div>
-            </div>
-            {/* <div
-              className="absolute hover:cursor-pointer hover:bg-antiqueWhite top-full rd-block right-full h-full flex flex-row items-center mr-2 mt-2 border-isabelline"
-              onClick={() => {
-                router.replace("/");
-              }}
-            >
-              <div className="flex rounded-[50px] flex-row font-bold items-center text-[14px] px-2">/</div>
-            </div> */}
-          </>
-        )}
       </div>
     </>
   );

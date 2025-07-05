@@ -21,37 +21,19 @@ function Create() {
 
   const [hashtags, setHashtags] = useState<string[]>([]);
 
-  const handleStyling = (style: string) => {
-    if (textareaRef.current) {
-      const textarea = textareaRef.current;
-      const start = textarea.selectionStart;
-      const end = textarea.selectionEnd;
-
-      // Insert `****` at the cursor position
-      const before = body.slice(0, start);
-      const after = body.slice(end);
-
-      const markup = style === "bold" ? "****" : style === "italic" ? "**" : "~~~~";
-
-      const updatedText = `${before}${markup}${after}`;
-      setBody(updatedText);
-
-      const cursorPosition = start + markup.length / 2;
-      setTimeout(() => {
-        textarea.setSelectionRange(cursorPosition, cursorPosition);
-        textarea.focus();
-      }, 0);
-    }
-  };
-
   const handlePost = async () => {
     const toastId = toast.loading("Creating post...");
 
-    if (title.length < 8) return toast.error("Title must be at least 8 characters long", { id: toastId });
+    if (title.length < 8)
+      return toast.error("Title must be at least 8 characters long", {
+        id: toastId,
+      });
 
-    if (!body) return toast.error("Please add a body to your post", { id: toastId });
+    if (!body)
+      return toast.error("Please add a body to your post", { id: toastId });
 
-    if (hashtags.length === 0) return toast.error("Please add at least one hashtag", { id: toastId });
+    if (hashtags.length === 0)
+      return toast.error("Please add at least one hashtag", { id: toastId });
 
     try {
       const res = await customAxios.post("/post/create", {
@@ -65,7 +47,9 @@ function Create() {
     } catch (error: any) {
       const { response } = error;
       const message = response?.data?.message || "Failed to create post";
-      toast.error(Array.isArray(message) ? message[0] : message, { id: toastId });
+      toast.error(Array.isArray(message) ? message[0] : message, {
+        id: toastId,
+      });
     }
   };
 
@@ -97,8 +81,8 @@ function Create() {
           onBlur={() => setTextAreaFocused(false)}
         />
       </div>
-      <div className="rd-block bg-isabelline mb-2 p-1">
-        <div className="flex flex-row gap-x-6 gap-y-2 px-3 py-2 text-sm font-light flex-wrap">
+      <div className="rd-block !bg-linen mb-2 p-1">
+        <div className="flex flex-row gap-x-6 gap-y-2 px-3 py-2 text-sm sm:text-[16px] font-light flex-wrap">
           {hashtags.map((hashtag) => (
             <button
               className="flex flex-row gap-1 items-center hover:line-through cursor-pointer"
@@ -117,7 +101,7 @@ function Create() {
             <input
               type="text"
               placeholder="hashtag..."
-              className="text-sm outline-none w-full"
+              className="text-sm sm:text-[16px] outline-none w-full"
               value={hashtagValue}
               onChange={(e) => {
                 const value = e.target.value.replace(/\s/g, "");
@@ -127,7 +111,8 @@ function Create() {
               onKeyDown={(e) => {
                 if (e.key === "Enter") {
                   if (hashtagValue.length < 1) return;
-                  if (hashtags.includes(hashtagValue)) return setHashtagValue("");
+                  if (hashtags.includes(hashtagValue))
+                    return setHashtagValue("");
                   setHashtags((prev) => [...prev, hashtagValue]);
                   setHashtagValue("");
                 }
@@ -143,43 +128,14 @@ function Create() {
             />
           </div>
         </div>
-        <div className="flex flex-row mt-2 justify-between">
-          <div className="flex flex-row ml-2 items-center gap-1">
-            <button
-              className="p-2 rd-block bg-isabelline rounded-sm hover:bg-linen cursor-pointer"
-              onMouseDown={(e) => e.preventDefault()}
-              onClick={() => {
-                handleStyling("bold");
-              }}
-              disabled={!textAreaFocused}
-            >
-              <TextB size={20} color="var(--color-deepBeaver)" />
-            </button>
-            <button
-              className="p-2 rd-block bg-isabelline rounded-sm hover:bg-linen cursor-pointer"
-              onMouseDown={(e) => e.preventDefault()}
-              onClick={() => {
-                handleStyling("italic");
-              }}
-              disabled={!textAreaFocused}
-            >
-              <TextItalic size={20} color="var(--color-deepBeaver)" />
-            </button>
-            <button
-              className="p-2 rd-block bg-isabelline rounded-sm hover:bg-linen cursor-pointer"
-              onMouseDown={(e) => e.preventDefault()}
-              onClick={() => {
-                handleStyling("strikethrough");
-              }}
-              disabled={!textAreaFocused}
-            >
-              <TextStrikethrough size={20} color="var(--color-deepBeaver)" />
-            </button>
-            <div className="text-sm font-extralight ml-2 mt-[2px]">
-              <p>Markdown supported!</p>
-            </div>
+        <div className="flex flex-row ml-2 px-1 justify-between">
+          <div className="text-xs font-extralight mt-[2px]">
+            <p>Markdown supported!</p>
           </div>
-          <button className="px-4 py-2 mr-2 rd-block bg-isabelline hover:bg-linen cursor-pointer text-base" onClick={handlePost}>
+          <button
+            className="px-4 mr-2 font-bold cursor-pointer text-base active-tap"
+            onClick={handlePost}
+          >
             Post
           </button>
         </div>

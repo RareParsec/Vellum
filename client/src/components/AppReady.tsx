@@ -6,16 +6,25 @@ import { onAuthStateChanged } from "firebase/auth";
 import React, { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Feather } from "@phosphor-icons/react";
+import { useRouter } from "next/navigation";
 
 function AppReady({ children }: { children: React.ReactNode }) {
   const [ready, setReady] = useState(false);
   const refreshUser = useUserStore((state) => state.refreshUser);
   const [isMobile, setIsMobile] = useState(false);
+  const router = useRouter();
 
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, async () => {
-      await refreshUser();
-      setReady(true);
+      await refreshUser()
+        .then(() => {
+          console.log("ready");
+          setReady(true);
+        })
+        .catch((error) => {
+          console.log(error);
+          router.push("/auth");
+        });
     });
 
     const checkDevice = () => {
@@ -31,23 +40,23 @@ function AppReady({ children }: { children: React.ReactNode }) {
     };
   }, []);
 
-  if (isMobile) {
-    return (
-      <AnimatePresence>
-        <div className="w-screen h-screen flex flex-col items-center justify-center">
-          <Feather size={40} color="var(--color-deepBeaver)" />
-          <div className=" text-beaver italic">This application in only currently available on desktop :&#40;</div>
-        </div>
-      </AnimatePresence>
-    );
-  }
+  // if (isMobile) {
+  //   return (
+  //     <AnimatePresence>
+  //       <div className="w-screen h-screen flex flex-col items-center justify-center">
+  //         <Feather size={40} color="var(--color-deepBeaver)" />
+  //         <div className=" text-beaver italic">This application in only currently available on desktop :&#40;</div>
+  //       </div>
+  //     </AnimatePresence>
+  //   );
+  // }
 
   if (!ready) {
     return (
       <AnimatePresence>
         <motion.div
           key="vellum-loading"
-          className="fixed inset-0 z-50 flex items-center justify-center bg-isabelline"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-linen"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}

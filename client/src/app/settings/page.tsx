@@ -24,7 +24,7 @@ function Settings() {
 
       <div className="w-full flex flex-row justify-center">
         <div
-          className="text-mutedClayRed font-bold mt-9 cursor-pointer p-2 px-4 hover:bg-whisperBlush rd-block w-fit"
+          className="text-mutedClayRed bg-linen shadow-sm font-bold mt-9 cursor-pointer p-2 px-4 hover:bg-toastedLinen rd-block w-fit"
           onClick={() => {
             auth.signOut();
             router.push("/auth");

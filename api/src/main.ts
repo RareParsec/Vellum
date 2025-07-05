@@ -6,10 +6,10 @@ async function bootstrap() {
 
   app.enableCors({
     origin:
-      process.env.NODE_ENV === 'production' ? 'https://www.vellumi.com' : true,
+      process.env.NODE_ENV === 'production' ? 'https://www.vellumi.me' : true,
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
   });
 
-  await app.listen(process.env.PORT ?? 3000);
+  await app.listen(process.env.PORT ?? 3000, '0.0.0.0');
 }
 bootstrap();

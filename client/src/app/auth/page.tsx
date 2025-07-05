@@ -7,7 +7,7 @@ import { auth, provider } from "@/config/firebase";
 import errorHandler from "@/utils/errorHandler";
 import { useUserStore } from "@/zustand/userStore";
 import { GoogleLogo } from "@phosphor-icons/react/dist/icons/GoogleLogo";
-import { signInWithPopup, signOut } from "firebase/auth";
+import { signInWithPopup, signInWithRedirect, signOut } from "firebase/auth";
 import { useRouter } from "next/navigation";
 import React, { useEffect, useState } from "react";
 import toast from "react-hot-toast";
@@ -18,6 +18,15 @@ function ContinueWithGoogle() {
   const router = useRouter();
 
   const refreshUser = useUserStore((state) => state.refreshUser);
+
+  // const isMobileDevice = () => {
+  //   const hasTouchScreen = "ontouchstart" in window || navigator.maxTouchPoints > 0 || navigator.maxTouchPoints > 0;
+
+  //   const userAgent = navigator.userAgent.toLowerCase();
+  //   const isMobileUserAgent = /android|webos|iphone|ipad|ipod|blackberry|windows phone/i.test(userAgent);
+
+  //   return hasTouchScreen && isMobileUserAgent;
+  // };
 
   const handleGoogleAuth = async () => {
     const toastId = toast.loading("Loading...");
@@ -30,7 +39,9 @@ function ContinueWithGoogle() {
     }
 
     try {
-      const res = await customAxios.get("/auth/continueWithGoogle", { headers: { ForceTokenRefresh: true } });
+      const res = await customAxios.get("/auth/continueWithGoogle", {
+        headers: { ForceTokenRefresh: true },
+      });
 
       if (res.data == "user-not-yet-created") {
         toast.dismiss(toastId);
@@ -62,9 +73,14 @@ function ContinueWithGoogle() {
   return (
     <div>
       <SelectUsername isOpen={isModalOpen} />
-      <div className="flex justify-center font-bold text-2xl mt-50">Sign in!</div>
+      <div className="flex justify-center font-bold text-2xl mt-50">
+        Sign in!
+      </div>
       <div className="flex flex-row justify-center mt-8">
-        <div className="flex items-center text-xl font-medium gap-3 rd-block hover:bg-antiqueWhite" onClick={handleGoogleAuth}>
+        <div
+          className="flex items-center text-xl font-medium gap-3 rd-block hover:bg-rosy hover:cursor-pointer"
+          onClick={handleGoogleAuth}
+        >
           <GoogleLogo size={32} color="var(--color-beaver)" />
           continue with google
         </div>

@@ -12,6 +12,17 @@ type User = {
   SubscribedPost?: SubscribedPost[];
 };
 
+type NotificationType = {
+  id: string;
+  user_id: string;
+  post_id?: string;
+  comment_id?: string;
+  message: string;
+  viewed: boolean;
+  preview: string;
+  timestamp: Date;
+};
+
 type CommentType = {
   id: string;
   user_id: string;

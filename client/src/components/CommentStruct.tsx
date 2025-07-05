@@ -1,5 +1,11 @@
 "use client";
-import { ArrowBendUpLeft, Certificate, DotsThreeOutline, Share, TrashSimple } from "@phosphor-icons/react";
+import {
+  ArrowBendUpLeft,
+  Certificate,
+  DotsThreeOutline,
+  Share,
+  TrashSimple,
+} from "@phosphor-icons/react";
 import { formatDistanceToNow } from "date-fns";
 import React, { useState } from "react";
 import ReactMarkdown from "react-markdown";
@@ -32,16 +38,22 @@ function CommentStruct({
 
   const router = useRouter();
 
-  const handleMenuClick = (e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
+  const handleMenuClick = (
+    e: React.MouseEvent<HTMLButtonElement, MouseEvent>
+  ) => {
     e.stopPropagation();
     setMenuOpen(!menuOpen);
   };
 
-  const handleShare = async (e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
+  const handleShare = async (
+    e: React.MouseEvent<HTMLButtonElement, MouseEvent>
+  ) => {
     e.stopPropagation();
     const toastId = toast.loading("Sharing comment...");
     try {
-      await navigator.clipboard.writeText(`https://vellumi.me/post/${comment.post_id}?comment=${comment.id}`);
+      await navigator.clipboard.writeText(
+        `https://vellumi.me/post/${comment.post_id}?comment=${comment.id}`
+      );
       toast.success("Comment link copied to clipboard", { id: toastId });
     } catch (error) {
       toast.error("Failed to copy comment link", { id: toastId });
@@ -70,14 +82,23 @@ function CommentStruct({
     } catch (error: any) {
       const { response } = error;
       const message = response?.data?.message || "Failed to delete comment";
-      toast.error(Array.isArray(message) ? message[0] : message, { id: toastId });
+      toast.error(Array.isArray(message) ? message[0] : message, {
+        id: toastId,
+      });
     }
   };
 
   return (
     <div
-      className={`rd-block rounded-bl-none ${pushUserToRoute ? "cursor-pointer" : "cursor-default"}`}
-      onClick={() => pushUserToRoute && router.push(`/post/${comment.post_id}?comment=${comment.id}`)}
+      className={`rd-block rounded-bl-none parent ${
+        pushUserToRoute
+          ? "cursor-pointer hover:bg-toastedLinen"
+          : "cursor-default"
+      }`}
+      onClick={() =>
+        pushUserToRoute &&
+        router.push(`/post/${comment.post_id}?comment=${comment.id}`)
+      }
     >
       <div className="flex flex-row justify-between text-sm">
         <div className={`flex flex-row gap-2`}>
@@ -87,22 +108,34 @@ function CommentStruct({
           >
             {comment.user?.username}
           </div>
-          <div>{formatDistanceToNow(new Date(comment.timestamp), { addSuffix: true }).replace(/^(about|over|almost)\s/, "")}</div>
+          <div>
+            {formatDistanceToNow(new Date(comment.timestamp), {
+              addSuffix: true,
+            }).replace(/^(about|over|almost)\s/, "")}
+          </div>
         </div>
         <div className="relative flex">
           <button
             className={`${
               comment.user_id !== auth.currentUser?.uid && "hidden"
-            } rd-block py-0 hover:bg-whisperBlush cursor-pointer rounded-sm ${menuOpen && "rounded-b-none bg-isabelline"}`}
+            } rd-block py-0 hover:!bg-toastedLinen ${
+              pushUserToRoute ? "bg-linen" : "!bg-linen"
+            } cursor-pointer rounded-sm shadow-sm ${
+              menuOpen && "rounded-b-none"
+            } child`}
             onClick={handleMenuClick}
           >
             <DotsThreeOutline size={22} color="var(--color-beaver)" />
           </button>
 
           {menuOpen && (
-            <div className="absolute flex flex-col top-full left-0 rd-block bg-isabelline p-0 w-30 rounded-tl-none overflow-hidden border border-linen border-l-0 border-r-2 border-b-2">
+            <div
+              className={`absolute flex flex-col top-full left-0 rd-block ${
+                pushUserToRoute ? "bg-linen" : "!bg-linen"
+              } p-0 w-30 rounded-tl-none overflow-hidden border border-linen border-l-0 border-r-2 border-b-2 child`}
+            >
               <button onClick={deleteComment}>
-                <div className="flex flex-row flex-grow p-2 py-[7px] gap-2 hover:bg-whisperBlush cursor-pointer items-center">
+                <div className="flex flex-row flex-grow p-2 py-[7px] gap-2 hover:bg-toastedLinen cursor-pointer items-center">
                   <TrashSimple size={22} color="var(--color-beaver)" />
                   <div className="text-sm">delete</div>
                 </div>
@@ -113,34 +146,50 @@ function CommentStruct({
       </div>
       <div className="mt-2">
         <div className={`mt-2`}>
-          <ReactMarkdown remarkPlugins={[remarkGfm, remarkBreaks]}>{comment.content}</ReactMarkdown>
+          <ReactMarkdown remarkPlugins={[remarkGfm, remarkBreaks]}>
+            {comment.content}
+          </ReactMarkdown>
         </div>
       </div>
       <div className={`flex flex-row justify-between mt-2`}>
         <div className="flex flex-row gap-2">
-          <button className="rd-block flex flex-row bg-isabelline cursor-pointer gap-2 ml-2 hover:bg-whisperBlush" onClick={handleShare}>
+          <button
+            className={`rd-block flex flex-row ${
+              pushUserToRoute ? "bg-linen" : "!bg-linen"
+            } shadow-sm cursor-pointer gap-2 ml-2 hover:!bg-toastedLinen child`}
+            onClick={handleShare}
+          >
             <Share size={22} color="var(--color-beaver)" />
           </button>
-          <button className="rd-block flex flex-row bg-isabelline cursor-pointer gap-2 hover:bg-whisperBlush" onClick={handleAward}>
+          <button
+            className={`rd-block flex flex-row ${
+              pushUserToRoute ? "bg-linen" : "!bg-linen"
+            } cursor-pointer shadow-sm gap-2 hover:!bg-toastedLinen child`}
+            onClick={handleAward}
+          >
             <Certificate size={22} color="var(--color-beaver)" />
             <div className="text-sm">award</div>
           </button>
         </div>
         <div className="flex flex-row gap-2">
-          {/* <button className="rd-block flex flex-row bg-isabelline cursor-pointer gap-2 hover:bg-whisperBlush" onClick={handleSubscribe}>
+          {/* <button className="rd-block flex flex-row bg-linen cursor-pointer gap-2 hover:bg-toastedLinen" onClick={handleSubscribe}>
             <ListHeart size={22} color="var(--color-beaver)" />
           </button> */}
           {allowReply && (
             <button
-              className={`rd-block flex flex-row bg-isabelline cursor-pointer gap-2 ${
-                isReplyingTo ? "bg-softSageGreen" : "hover:bg-whisperBlush"
-              }`}
+              className={`rd-block flex flex-row !bg-linen cursor-pointer gap-2 ${
+                isReplyingTo ? "bg-softSageGreen" : "hover:!bg-toastedLinen"
+              } child shadow-sm`}
               onClick={() => {
                 if (!user) return router.push("/auth");
                 handleReply();
               }}
             >
-              <div className={`${isReplyingTo ? "text-deepMocha" : "text-deepBeaver"}`}>
+              <div
+                className={`${
+                  isReplyingTo ? "text-deepMocha" : "text-deepBeaver"
+                }`}
+              >
                 <ArrowBendUpLeft size={22} />
               </div>
               <div className="text-sm">reply</div>
