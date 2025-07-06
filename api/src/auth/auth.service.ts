@@ -18,7 +18,7 @@ export class AuthService {
     try {
       const foundUser = await this.prisma.user.findFirst({
         where: {
-          id: user.uid,
+          email: user.email,
         },
       });
 
@@ -34,7 +34,9 @@ export class AuthService {
   }
 
   async createUser(user: DecodedIdToken, username: string) {
-    if (!username || username.length < 3)
+    const trimmedUsername = username.trim();
+
+    if (!trimmedUsername || trimmedUsername.length < 3)
       throw new BadRequestException(
         'Username must be at least 3 characters long',
       );
@@ -44,15 +46,15 @@ export class AuthService {
         throw new UnauthorizedException('Email not provided');
       }
 
-      const existingEmail = await this.prisma.user.findUnique({
+      const existingEmailUser = await this.prisma.user.findUnique({
         where: { email: user.email },
       });
-      if (existingEmail) {
-        throw new UnauthorizedException('Email already exists');
+      if (existingEmailUser) {
+        return await this.signIn(user);
       }
 
       const existingUsername = await this.prisma.user.findUnique({
-        where: { username },
+        where: { username: trimmedUsername },
       });
       if (existingUsername) {
         throw new UnauthorizedException('Username already exists');
@@ -62,7 +64,7 @@ export class AuthService {
         data: {
           id: user.uid,
           email: user.email,
-          username: username,
+          username: trimmedUsername,
           bio: 'This is a bio',
         },
       });
@@ -76,7 +78,7 @@ export class AuthService {
   async signIn(user: DecodedIdToken) {
     try {
       const foundUser = await this.prisma.user.findUnique({
-        where: { id: user.uid },
+        where: { email: user.email },
       });
 
       if (!foundUser) {
@@ -92,18 +94,33 @@ export class AuthService {
 
   async getUser(username: string, user: DecodedIdToken) {
     try {
-      const foundUser = await this.prisma.user.findUnique({
+      console.log('Searching for username:', `"${username}"`);
+
+      const users = await this.prisma.user.findMany({});
+      console.log(
+        'All users:',
+        users.map((u, index) => `[${index}]: "${u.username}"`),
+      );
+
+      // Check if ANY user matches
+      const matchingUser = users.find((u) => u.username === username);
+      console.log('Found matching user in array:', matchingUser);
+
+      const foundUser = await this.prisma.user.findFirst({
         where: { username },
       });
+      console.log('foundUser from findFirst:', foundUser);
 
+      console.log(foundUser);
       if (!foundUser) {
         throw new NotFoundException('User not found...');
       }
 
       const { email, ...rest } = foundUser;
 
-      return user.uid === foundUser.id ? foundUser : rest;
+      return user && user.email === foundUser.email ? foundUser : rest;
     } catch (error) {
+      // console.log(error);
       if (error instanceof HttpException) throw error;
       throw new InternalServerErrorException('Error getting user...');
     }
