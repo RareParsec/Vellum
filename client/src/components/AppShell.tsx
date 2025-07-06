@@ -8,12 +8,7 @@ import {
   User,
 } from "@phosphor-icons/react";
 import { usePathname, useRouter } from "next/navigation";
-import React, {
-  Suspense,
-  useEffect,
-  useRef,
-  useState,
-} from "react";
+import React, { Suspense, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import Notifications from "./Notifications";
 import { useNotificationsStore } from "@/zustand/notificationsStore";
@@ -30,28 +25,14 @@ function AppShell({ children }: { children: React.ReactNode }) {
   const notifications = useNotificationsStore((state) => state.notifications);
   const user = useUserStore((state) => state.user);
 
+  const [mobileMenuItems, setMobileMenuItems] = useState<
+    { name: string; icon: React.ReactNode; link: string }[]
+  >([]);
+
   const lastSavedScroll = useRef<number | null>(null);
 
   const router = useRouter();
   const pathname = usePathname();
-
-  const [mobileMenuItems, setMobileMenuItems] = useState([
-    {
-      name: "Profile",
-      icon: <User size={26} color="var(--color-deepBeaver)" />,
-      link: user ? `/profile/${user?.username}` : "/auth",
-    },
-    {
-      name: "Settings",
-      icon: <GearSix size={26} color="var(--color-deepBeaver)" />,
-      link: user ? "/settings" : "/auth",
-    },
-    {
-      name: "Create",
-      icon: <Plus size={26} color="var(--color-deepBeaver)" />,
-      link: user ? "/create" : "/auth",
-    },
-  ]);
 
   // const itemVariants = {
   //   hidden: (i: number) => ({
@@ -183,6 +164,26 @@ function AppShell({ children }: { children: React.ReactNode }) {
   };
 
   useEffect(() => {
+    setMobileMenuItems([
+      {
+        name: "Profile",
+        icon: <User size={26} color="var(--color-deepBeaver)" />,
+        link: user ? `/profile/${user?.username}` : "/auth",
+      },
+      {
+        name: "Settings",
+        icon: <GearSix size={26} color="var(--color-deepBeaver)" />,
+        link: user ? "/settings" : "/auth",
+      },
+      {
+        name: "Create",
+        icon: <Plus size={26} color="var(--color-deepBeaver)" />,
+        link: user ? "/create" : "/auth",
+      },
+    ]);
+  }, [user]);
+
+  useEffect(() => {
     window.addEventListener("scroll", handleBodyScroll);
 
     return () => {
@@ -284,6 +285,7 @@ function AppShell({ children }: { children: React.ReactNode }) {
 
             <AnimatePresence>
               {mobileMenuOpen &&
+                mobileMenuItems.length > 0 &&
                 mobileMenuItems.map((item, index) => {
                   return (
                     <motion.div

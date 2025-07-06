@@ -22,8 +22,11 @@ export const useUserStore = create(
       refreshUser: async () => {
         try {
           if (!auth.currentUser) return;
-          const response = await customAxios.get("/auth/signIn", { headers: { ForceTokenRefresh: true } });
+          const response = await customAxios.get("/auth/signIn", {
+            headers: { ForceTokenRefresh: true },
+          });
           const user = response?.data;
+
           if (user) {
             set({ user });
           } else {
