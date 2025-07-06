@@ -1,7 +1,6 @@
 "use client";
 import customAxios from "@/config/axios";
 import { useUserStore } from "@/zustand/userStore";
-import { TextB, TextItalic, TextStrikethrough } from "@phosphor-icons/react";
 import { useRouter } from "next/navigation";
 import React, { useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";

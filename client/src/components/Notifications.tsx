@@ -117,9 +117,8 @@ function Notifications({
               )}
               <div className="flex flex-col gap-2  w-full">
                 {notifications.map((notification, index) => (
-                  <div>
+                  <div key={notification.id}>
                     <div
-                      key={notification.id}
                       onClick={() => {
                         setIsOpen(false);
                         router.push(

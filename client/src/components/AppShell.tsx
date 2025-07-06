@@ -9,8 +9,6 @@ import {
 } from "@phosphor-icons/react";
 import { usePathname, useRouter } from "next/navigation";
 import React, {
-  createRef,
-  RefObject,
   Suspense,
   useEffect,
   useRef,
