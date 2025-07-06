@@ -6,11 +6,11 @@ import customAxios from "@/config/axios";
 import { auth, provider } from "@/config/firebase";
 import errorHandler from "@/utils/errorHandler";
 import { useUserStore } from "@/zustand/userStore";
-import { GoogleLogo } from "@phosphor-icons/react/dist/icons/GoogleLogo";
 import { signInWithPopup, signOut } from "firebase/auth";
 import { useRouter } from "next/navigation";
 import React, { useEffect, useState } from "react";
 import toast from "react-hot-toast";
+import { GoogleLogo } from "@phosphor-icons/react";
 
 function ContinueWithGoogle() {
   const [isModalOpen, setIsModalOpen] = useState(false);
